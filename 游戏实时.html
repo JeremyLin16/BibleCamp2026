@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mapa del Campamento 2026</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Arial', sans-serif; background-color: #f0f0f0; }
+        
+        /* 地图容器 */
+        #map-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-image: url('mapa.jpg'); /* 你的地图图片 */
+            background-size: cover;
+            background-position: center;
+            height: 100vh; 
+        }
+
+        /* 标记点样式 */
+        .station-pin {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            transition: transform 0.2s;
+        }
+
+        /* 状态颜色 */
+        .disponible { background-color: #4CAF50; border: 2px solid #2E7D32; } /* 绿色 */
+        .ocupado { background-color: #F44336; border: 2px solid #C62828; } /* 红色 */
+
+        /* 关主模式下的交互提示 */
+        .is-admin .station-pin { cursor: pointer; }
+        .is-admin .station-pin:active { transform: translate(-50%, -50%) scale(0.9); }
+
+        /* 顶部状态栏 */
+        #header {
+            position: fixed; top: 0; width: 100%; text-align: center;
+            background: rgba(255, 255, 255, 0.9); padding: 10px; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h2 style="margin: 0; font-size: 18px;" id="mode-title">🗺️ Mapa de Actividades</h2>
+    </div>
+
+    <div id="map-container">
+        <div class="station-pin" id="pin-guerra" data-id="guerra_agua" style="left: 20%; top: 30%;">1</div>
+        <div class="station-pin" id="pin-refugio" data-id="refugio_emociones" style="left: 60%; top: 45%;">2</div>
+        <div class="station-pin" id="pin-obstaculos" data-id="carrera_obstaculos" style="left: 40%; top: 70%;">3</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyARJusoebHjF9LrkinDk4Gk8cyUFQl5QAI",
+            authDomain: "biblecamp-2026-f56cd.firebaseapp.com",
+            
+            // 【关键修改 2】必须加上 databaseURL。
+            // 注意：如果你在创建数据库时选的不是欧洲(europe-west1)，请把下面链接里的 "-default-rtdb.europe-west1.firebasedatabase.app" 替换成你在 Firebase 后台 Realtime Database 顶部看到的那个链接。
+            databaseURL: "https://biblecamp-2026-f56cd-default-rtdb.europe-west1.firebasedatabase.app", 
+            
+            projectId: "biblecamp-2026-f56cd",
+            storageBucket: "biblecamp-2026-f56cd.firebasestorage.app",
+            messagingSenderId: "790291486057",
+            appId: "1:790291486057:web:3262215eaee626fc8219f8"
+        };
+
+        // 使用兼容模式的初始化语法
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 检查权限模式
+        const urlParams = new URLSearchParams(window.location.search);
+        const isGuanzhu = urlParams.get('role') === 'guanzhu';
+        
+        if (isGuanzhu) {
+            document.body.classList.add('is-admin');
+            document.getElementById('mode-title').innerText = "🔧 Modo Creador (Toca para cambiar)";
+        }
+
+        const pins = document.querySelectorAll('.station-pin');
+        let currentStates = {};
+
+        // 1. 实时监听数据库状态
+        db.ref('camp_stations').on('value', (snapshot) => {
+            const data = snapshot.val() || {};
+            currentStates = data;
+
+            pins.forEach(pin => {
+                const stationId = pin.getAttribute('data-id');
+                const status = data[stationId] || 'disponible'; 
+                pin.className = 'station-pin ' + status;
+            });
+        });
+
+        // 2. 关主点击切换状态的逻辑
+        if (isGuanzhu) {
+            pins.forEach(pin => {
+                pin.addEventListener('click', () => {
+                    const stationId = pin.getAttribute('data-id');
+                    const currentState = currentStates[stationId] || 'disponible';
+                    const newState = currentState === 'disponible' ? 'ocupado' : 'disponible';
+                    
+                    db.ref('camp_stations/' + stationId).set(newState);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

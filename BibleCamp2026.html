@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mapa Campamento 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #22c55e;
+    --green-dark: #15803d;
+    --red: #ef4444;
+    --red-dark: #b91c1c;
+    --bg: #0f1117;
+    --surface: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.12);
+    --text: #f0f0f0;
+    --muted: rgba(255,255,255,0.5);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(15,17,23,0.95);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 20;
+  }
+
+  #header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  #mode-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    letter-spacing: 0.03em;
+  }
+
+  #mode-badge.admin { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+
+  /* ── Legend ── */
+  #legend {
+    display: flex;
+    gap: 16px;
+    padding: 8px 16px;
+    background: rgba(15,17,23,0.9);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.green { background: var(--green); }
+  .dot.red { background: var(--red); }
+
+  /* ── Map wrapper ── */
+  #map-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #map-bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('mapa.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.65) saturate(0.8);
+  }
+
+  /* Dark overlay for contrast */
+  #map-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 100%);
+    pointer-events: none;
+  }
+
+  /* ── Pins ── */
+  .pin {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: default;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pin-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border: 2.5px solid rgba(255,255,255,0.25);
+  }
+
+  .pin.disponible .pin-circle {
+    background: var(--green);
+    box-shadow: 0 0 0 6px rgba(34,197,94,0.25), 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .pin.ocupado .pin-circle {
+    background: var(--red);
+    box-shadow: 0 0 0 6px rgba(239,68,68,0.25), 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .pin-label {
+    font-size: 10px;
+    font-weight: 500;
+    background: rgba(0,0,0,0.75);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.1);
+    max-width: 90px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  /* Admin can click */
+  body.is-admin .pin { cursor: pointer; }
+  body.is-admin .pin:active .pin-circle { transform: scale(0.88); }
+
+  /* Pulse animation for disponible */
+  @keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5), 0 4px 12px rgba(0,0,0,0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(34,197,94,0), 0 4px 12px rgba(0,0,0,0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0), 0 4px 12px rgba(0,0,0,0.4); }
+  }
+
+  .pin.disponible .pin-circle { animation: pulse-green 2.5s infinite; }
+
+  /* ── Toast feedback ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: rgba(30,32,40,0.95);
+    border: 1px solid var(--border);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* ── Loading ── */
+  #loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15,17,23,0.8);
+    z-index: 50;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Admin bottom bar ── */
+  #admin-hint {
+    display: none;
+    padding: 10px 16px;
+    background: rgba(239,68,68,0.1);
+    border-top: 1px solid rgba(239,68,68,0.2);
+    font-size: 12px;
+    color: #fca5a5;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  body.is-admin #admin-hint { display: block; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🏕 Campamento 2026</h1>
+  <span id="mode-badge">👀 Vista equipo</span>
+</div>
+
+<div id="legend">
+  <div class="legend-item"><span class="dot green"></span>Disponible – podéis venir</div>
+  <div class="legend-item"><span class="dot red"></span>Ocupado – esperad</div>
+</div>
+
+<div id="map-wrapper">
+  <div id="map-bg"></div>
+  <div id="map-overlay"></div>
+  <div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
+</div>
+
+<div id="admin-hint">✏️ Toca un pin para cambiar disponibilidad</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+/* =========================================================
+   🔧 CONFIGURACIÓN FIREBASE — reemplaza con tus datos
+   ========================================================= */
+const firebaseConfig = {
+            apiKey: "AIzaSyARJusoebHjF9LrkinDk4Gk8cyUFQl5QAI",
+            authDomain: "biblecamp-2026-f56cd.firebaseapp.com",
+            
+            // 【关键修改 2】必须加上 databaseURL。
+            // 注意：如果你在创建数据库时选的不是欧洲(europe-west1)，请把下面链接里的 "-default-rtdb.europe-west1.firebasedatabase.app" 替换成你在 Firebase 后台 Realtime Database 顶部看到的那个链接。
+            databaseURL: "https://biblecamp-2026-f56cd-default-rtdb.europe-west1.firebasedatabase.app", 
+            
+            projectId: "biblecamp-2026-f56cd",
+            storageBucket: "biblecamp-2026-f56cd.firebasestorage.app",
+            messagingSenderId: "790291486057",
+            appId: "1:790291486057:web:3262215eaee626fc8219f8"
+        };
+
+/* =========================================================
+   ESTACIONES — ajusta left/top según tu mapa (en %)
+   ========================================================= */
+const STATIONS = [
+  { id: "entrada",    label: "Entrada",       num: "1", left: "7%",  top: "50%" },
+  { id: "spau",       label: "S. Pau",         num: "2", left: "27%", top: "38%" },
+  { id: "comedor",    label: "Comedor",        num: "3", left: "52%", top: "33%" },
+  { id: "msol",       label: "M. Sol",         num: "4", left: "52%", top: "57%" },
+  { id: "vbertran",   label: "V. Bertran",     num: "5", left: "65%", top: "48%" },
+  { id: "sjuan",      label: "S. Juan",        num: "6", left: "78%", top: "37%" },
+  { id: "salaPrinc",  label: "Sala principal", num: "7", left: "65%", top: "67%" },
+];
+
+/* =========================================================
+   INIT
+   ========================================================= */
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+const urlParams = new URLSearchParams(window.location.search);
+const isAdmin   = urlParams.get('role') === 'guia';
+
+if (isAdmin) {
+  document.body.classList.add('is-admin');
+  document.getElementById('mode-badge').textContent = '🔧 Modo guía';
+  document.getElementById('mode-badge').classList.add('admin');
+}
+
+/* Build pins */
+const mapWrapper = document.getElementById('map-wrapper');
+let currentStates = {};
+
+STATIONS.forEach(s => {
+  const pin = document.createElement('div');
+  pin.className = 'pin disponible';
+  pin.id = 'pin-' + s.id;
+  pin.setAttribute('data-id', s.id);
+  pin.style.left  = s.left;
+  pin.style.top   = s.top;
+
+  pin.innerHTML = `
+    <div class="pin-circle">${s.num}</div>
+    <div class="pin-label">${s.label}</div>
+  `;
+
+  if (isAdmin) {
+    pin.addEventListener('click', () => toggleStation(s.id));
+  }
+
+  mapWrapper.appendChild(pin);
+});
+
+/* Real-time listener */
+onValue(ref(db, 'juegos'), snapshot => {
+  document.getElementById('loading').style.display = 'none';
+  const data = snapshot.val() || {};
+  currentStates = data;
+
+  STATIONS.forEach(s => {
+    const status = data[s.id] || 'disponible';
+    const pin = document.getElementById('pin-' + s.id);
+    if (pin) {
+      pin.className = 'pin ' + status;
+    }
+  });
+});
+
+/* Toggle (admin only) */
+function toggleStation(id) {
+  const current  = currentStates[id] || 'disponible';
+  const next     = current === 'disponible' ? 'ocupado' : 'disponible';
+  const label    = STATIONS.find(s => s.id === id)?.label || id;
+
+  set(ref(db, 'juegos/' + id), next)
+    .then(() => showToast(next === 'ocupado'
+      ? `🔴 ${label} → Ocupado`
+      : `🟢 ${label} → Disponible`))
+    .catch(err => {
+      console.error(err);
+      showToast('❌ Error al actualizar');
+    });
+}
+
+/* Toast helper */
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
