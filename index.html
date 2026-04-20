@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mapa Campamento 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -25,13 +25,20 @@
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
-    height: 100dvh;
-    overflow: hidden;
+    /* 移除所有 overflow: hidden，允许原生滚动和缩放 */
+    padding-top: 100px; /* 给固定的头部留出空间 */
+    padding-bottom: 50px; /* 给底部的管理员提示留出空间 */
+  }
+
+  /* ── 固定的顶部控制栏 ── */
+  #top-bar {
+    position: fixed;
+    top: 0; left: 0; width: 100%;
+    z-index: 100;
     display: flex;
     flex-direction: column;
   }
 
-  /* ── Header ── */
   #header {
     display: flex;
     align-items: center;
@@ -39,8 +46,6 @@
     padding: 12px 16px;
     background: rgba(15,17,23,0.95);
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    z-index: 20;
   }
 
   #header h1 {
@@ -70,7 +75,6 @@
     padding: 8px 16px;
     background: rgba(15,17,23,0.9);
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
   }
 
   .legend-item {
@@ -89,28 +93,18 @@
   .dot.green { background: var(--green); }
   .dot.red { background: var(--red); }
 
-  /* ── Map wrapper ── */
-  #map-wrapper {
-    flex: 1;
+  /* ── 真正可以滑动的地图本体 ── */
+  #map-content {
     position: relative;
-    overflow: hidden;
-  }
-
-  #map-bg {
-    position: absolute;
-    inset: 0;
+    /* 强制固定宽和高，比手机屏幕大很多 */
+    width: 1200px;
+    height: 900px;
     background-image: url('mapa.jpg');
-    background-size: cover;
-    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: top left;
     filter: brightness(0.65) saturate(0.8);
-  }
-
-  /* Dark overlay for contrast */
-  #map-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 100%);
-    pointer-events: none;
+    margin: 0 auto; /* 如果在大屏幕上看，让它居中 */
   }
 
   /* ── Pins ── */
@@ -166,11 +160,9 @@
     line-height: 1.3;
   }
 
-  /* Admin can click */
   body.is-admin .pin { cursor: pointer; }
   body.is-admin .pin:active .pin-circle { transform: scale(0.88); }
 
-  /* Pulse animation for disponible */
   @keyframes pulse-green {
     0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5), 0 4px 12px rgba(0,0,0,0.4); }
     70% { box-shadow: 0 0 0 10px rgba(34,197,94,0), 0 4px 12px rgba(0,0,0,0.4); }
@@ -193,7 +185,7 @@
     font-size: 13px;
     font-weight: 500;
     backdrop-filter: blur(10px);
-    z-index: 100;
+    z-index: 200;
     transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
     opacity: 0;
     pointer-events: none;
@@ -206,13 +198,13 @@
 
   /* ── Loading ── */
   #loading {
-    position: absolute;
+    position: fixed; /* 修正：让 loading 始终在屏幕中央 */
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(15,17,23,0.8);
-    z-index: 50;
+    z-index: 500;
     flex-direction: column;
     gap: 12px;
   }
@@ -230,13 +222,18 @@
   /* ── Admin bottom bar ── */
   #admin-hint {
     display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     padding: 10px 16px;
-    background: rgba(239,68,68,0.1);
+    background: rgba(239,68,68,0.95);
     border-top: 1px solid rgba(239,68,68,0.2);
     font-size: 12px;
-    color: #fca5a5;
+    color: white;
+    font-weight: 600;
     text-align: center;
-    flex-shrink: 0;
+    z-index: 100;
   }
 
   body.is-admin #admin-hint { display: block; }
@@ -244,21 +241,21 @@
 </head>
 <body>
 
-<div id="header">
-  <h1>🏕 Campamento 2026</h1>
-  <span id="mode-badge">👀 Vista equipo</span>
+<div id="top-bar">
+  <div id="header">
+    <h1>🏕 Campamento 2026</h1>
+    <span id="mode-badge">👀 Vista equipo</span>
+  </div>
+  <div id="legend">
+    <div class="legend-item"><span class="dot green"></span>Disponible – podéis venir</div>
+    <div class="legend-item"><span class="dot red"></span>Ocupado – esperad</div>
+  </div>
 </div>
 
-<div id="legend">
-  <div class="legend-item"><span class="dot green"></span>Disponible – podéis venir</div>
-  <div class="legend-item"><span class="dot red"></span>Ocupado – esperad</div>
-</div>
+<div id="map-content">
+  </div>
 
-<div id="map-wrapper">
-  <div id="map-bg"></div>
-  <div id="map-overlay"></div>
-  <div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
-</div>
+<div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
 
 <div id="admin-hint">✏️ Toca un pin para cambiar disponibilidad</div>
 
@@ -268,26 +265,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-/* =========================================================
-   🔧 CONFIGURACIÓN FIREBASE — reemplaza con tus datos
-   ========================================================= */
 const firebaseConfig = {
             apiKey: "AIzaSyARJusoebHjF9LrkinDk4Gk8cyUFQl5QAI",
             authDomain: "biblecamp-2026-f56cd.firebaseapp.com",
-            
-            // 【关键修改 2】必须加上 databaseURL。
-            // 注意：如果你在创建数据库时选的不是欧洲(europe-west1)，请把下面链接里的 "-default-rtdb.europe-west1.firebasedatabase.app" 替换成你在 Firebase 后台 Realtime Database 顶部看到的那个链接。
             databaseURL: "https://biblecamp-2026-f56cd-default-rtdb.europe-west1.firebasedatabase.app", 
-            
             projectId: "biblecamp-2026-f56cd",
             storageBucket: "biblecamp-2026-f56cd.firebasestorage.app",
             messagingSenderId: "790291486057",
             appId: "1:790291486057:web:3262215eaee626fc8219f8"
         };
 
-/* =========================================================
-   ESTACIONES — ajusta left/top según tu mapa (en %)
-   ========================================================= */
 const STATIONS = [
   { id: "entrada",    label: "Entrada",       num: "1", left: "7%",  top: "50%" },
   { id: "spau",       label: "S. Pau",         num: "2", left: "27%", top: "38%" },
@@ -298,9 +285,6 @@ const STATIONS = [
   { id: "salaPrinc",  label: "Sala principal", num: "7", left: "65%", top: "67%" },
 ];
 
-/* =========================================================
-   INIT
-   ========================================================= */
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
@@ -313,8 +297,8 @@ if (isAdmin) {
   document.getElementById('mode-badge').classList.add('admin');
 }
 
-/* Build pins */
-const mapWrapper = document.getElementById('map-wrapper');
+/* 注意：这里的目标改成了 map-content，确保点落在放大的地图上 */
+const mapContent = document.getElementById('map-content');
 let currentStates = {};
 
 STATIONS.forEach(s => {
@@ -334,10 +318,9 @@ STATIONS.forEach(s => {
     pin.addEventListener('click', () => toggleStation(s.id));
   }
 
-  mapWrapper.appendChild(pin);
+  mapContent.appendChild(pin);
 });
 
-/* Real-time listener */
 onValue(ref(db, 'juegos'), snapshot => {
   document.getElementById('loading').style.display = 'none';
   const data = snapshot.val() || {};
@@ -352,7 +335,6 @@ onValue(ref(db, 'juegos'), snapshot => {
   });
 });
 
-/* Toggle (admin only) */
 function toggleStation(id) {
   const current  = currentStates[id] || 'disponible';
   const next     = current === 'disponible' ? 'ocupado' : 'disponible';
@@ -368,7 +350,6 @@ function toggleStation(id) {
     });
 }
 
-/* Toast helper */
 let toastTimer;
 function showToast(msg) {
   const el = document.getElementById('toast');
