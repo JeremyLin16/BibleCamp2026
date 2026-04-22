@@ -2,16 +2,17 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mapa Campamento 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root { --bg:#0f1117;--surface:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.12);--text:#f0f0f0;--muted:rgba(255,255,255,0.45);--green:#22c55e;--red:#ef4444; }
   
-  /* body 保持固定，不整体反弹 */
-  body { font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column; }
+  /* 锁定 body，防止移动端下拉刷新 (Pull-to-refresh) */
+  body { font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column; touch-action: none; }
   
   #header { display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(15,17,23,.97);border-bottom:1px solid var(--border);flex-shrink:0;z-index:20; }
   #header h1 { font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase; }
@@ -23,10 +24,11 @@
   .dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
   .dot.g { background:var(--green); } .dot.r { background:var(--red); }
   
-  /* 【修复 2】wrapper 允许内部滚动 (overflow: auto) */
-  #map-wrapper { flex:1;position:relative;overflow:auto; -webkit-overflow-scrolling: touch; }
+  /* 【修改】隐藏溢出的滚动条，手势将完全由 JS 接管 */
+  #map-wrapper { flex:1;position:relative;overflow:hidden; cursor:grab; touch-action: none; }
+  #map-wrapper:active { cursor:grabbing; }
   
-  /* 【修复 3】建立一个巨大的固定画布，地图永远不会变形 */
+  /* 地图本体，尺寸固定，通过 JS 缩放 */
   #map-content { 
       position:relative; 
       width: 1200px; 
@@ -35,6 +37,7 @@
       background-size: 100% 100%;
       background-repeat: no-repeat;
       filter:brightness(.65) saturate(.8); 
+      transform-origin: center center; /* 确保缩放以中心为准 */
   }
   
   .pin { position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;user-select:none;-webkit-tap-highlight-color:transparent; }
@@ -49,8 +52,7 @@
   body.is-admin .pin { cursor:pointer; }
   body.is-admin .pin:active .pin-circle { transform:scale(.88); }
   
-  /* 【修复 4】所有的浮层改成 position: fixed，确保在屏幕正中，不随地图滚动 */
-  #sheet-bg { position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:flex-end; }
+  #sheet-bg { position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:flex-end; touch-action: none; }
   #sheet-bg.open { display:flex; }
   #sheet { background:#161b27;border-radius:18px 18px 0 0;border:.5px solid var(--border);width:100%;padding:18px 16px 32px; }
   #sheet-handle { width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 16px; }
@@ -170,7 +172,6 @@ let currentStates = {};
 let activeStation = null;
 let toastTimer;
 
-// 【关键修复 5】将打卡的按钮(pins)添加到巨大的 mapContent 中，而不是外部的 wrapper 中，这样点位会跟着地图一起滑动
 const mapContent = document.getElementById('map-content');
 STATIONS.forEach(s => {
   const p = document.createElement('div');
@@ -178,9 +179,41 @@ STATIONS.forEach(s => {
   p.id = 'pin-' + s.id;
   p.style.left = s.left; p.style.top = s.top;
   p.innerHTML = `<div class="pin-circle">${s.num}</div><div class="pin-label">${s.label}</div><div class="pin-team" id="pt-${s.id}"></div><div class="history-dots" id="hd-${s.id}"></div>`;
-  if (isAdmin) p.addEventListener('click', () => openSheet(s.id));
+  
+  // 防止拖动时误触点击事件
+  if (isAdmin) {
+    p.addEventListener('pointerup', (e) => {
+        if (!e.target.closest('#map-wrapper').classList.contains('is-panning')) {
+            openSheet(s.id);
+        }
+    });
+  }
   mapContent.appendChild(p); 
 });
+
+/* =========================================================
+   【新增】地图缩放与拖拽初始化核心逻辑 (Panzoom)
+   ========================================================= */
+const wrapper = document.getElementById('map-wrapper');
+// 动态计算初始缩放比例：根据手机屏幕宽度，让 1200px 的地图完整塞进去
+const initialScale = Math.min(wrapper.clientWidth / 1200, wrapper.clientHeight / 900) * 0.95;
+
+const panzoom = Panzoom(mapContent, {
+  maxScale: 2.5,          // 最大可以放大多少倍
+  minScale: initialScale, // 最小不能小于屏幕可见范围
+  startScale: initialScale, // 初始加载时的缩放比例 (刚好看到全图)
+  startX: 0,
+  startY: 0,
+  contain: 'outside'      // 限制拖动范围，不至于把地图拖出屏幕
+});
+
+// 给电脑端加上鼠标滚轮缩放支持
+wrapper.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
+
+// 区分“拖拽”和“点击”，避免拖拽地图时触发标记点
+wrapper.addEventListener('panzoomstart', () => wrapper.classList.add('is-panning'));
+wrapper.addEventListener('panzoomend', () => setTimeout(() => wrapper.classList.remove('is-panning'), 100));
+
 
 onValue(ref(db, 'juegos'), snapshot => {
   document.getElementById('loading').style.display = 'none';
