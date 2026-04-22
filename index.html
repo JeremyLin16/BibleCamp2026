@@ -2,362 +2,226 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mapa Campamento 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --green: #22c55e;
-    --green-dark: #15803d;
-    --red: #ef4444;
-    --red-dark: #b91c1c;
-    --bg: #0f1117;
-    --surface: rgba(255,255,255,0.06);
-    --border: rgba(255,255,255,0.12);
-    --text: #f0f0f0;
-    --muted: rgba(255,255,255,0.5);
-  }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    /* 移除所有 overflow: hidden，允许原生滚动和缩放 */
-    padding-top: 100px; /* 给固定的头部留出空间 */
-    padding-bottom: 50px; /* 给底部的管理员提示留出空间 */
-  }
-
-  /* ── 固定的顶部控制栏 ── */
-  #top-bar {
-    position: fixed;
-    top: 0; left: 0; width: 100%;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: rgba(15,17,23,0.95);
-    border-bottom: 1px solid var(--border);
-  }
-
-  #header h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  #mode-badge {
-    font-size: 11px;
-    font-weight: 500;
-    padding: 4px 10px;
-    border-radius: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    letter-spacing: 0.03em;
-  }
-
-  #mode-badge.admin { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #fca5a5; }
-
-  /* ── Legend ── */
-  #legend {
-    display: flex;
-    gap: 16px;
-    padding: 8px 16px;
-    background: rgba(15,17,23,0.9);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .dot.green { background: var(--green); }
-  .dot.red { background: var(--red); }
-
-  /* ── 真正可以滑动的地图本体 ── */
-  #map-content {
-    position: relative;
-    /* 强制固定宽和高，比手机屏幕大很多 */
-    width: 1200px;
-    height: 900px;
-    background-image: url('mapa.jpg');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: top left;
-    filter: brightness(0.65) saturate(0.8);
-    margin: 0 auto; /* 如果在大屏幕上看，让它居中 */
-  }
-
-  /* ── Pins ── */
-  .pin {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    cursor: default;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .pin-circle {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    color: white;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    border: 2.5px solid rgba(255,255,255,0.25);
-  }
-
-  .pin.disponible .pin-circle {
-    background: var(--green);
-    box-shadow: 0 0 0 6px rgba(34,197,94,0.25), 0 4px 12px rgba(0,0,0,0.4);
-  }
-
-  .pin.ocupado .pin-circle {
-    background: var(--red);
-    box-shadow: 0 0 0 6px rgba(239,68,68,0.25), 0 4px 12px rgba(0,0,0,0.4);
-  }
-
-  .pin-label {
-    font-size: 10px;
-    font-weight: 500;
-    background: rgba(0,0,0,0.75);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    white-space: nowrap;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,0.1);
-    max-width: 90px;
-    text-align: center;
-    line-height: 1.3;
-  }
-
-  body.is-admin .pin { cursor: pointer; }
-  body.is-admin .pin:active .pin-circle { transform: scale(0.88); }
-
-  @keyframes pulse-green {
-    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5), 0 4px 12px rgba(0,0,0,0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(34,197,94,0), 0 4px 12px rgba(0,0,0,0.4); }
-    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0), 0 4px 12px rgba(0,0,0,0.4); }
-  }
-
-  .pin.disponible .pin-circle { animation: pulse-green 2.5s infinite; }
-
-  /* ── Toast feedback ── */
-  #toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(60px);
-    background: rgba(30,32,40,0.95);
-    border: 1px solid var(--border);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 24px;
-    font-size: 13px;
-    font-weight: 500;
-    backdrop-filter: blur(10px);
-    z-index: 200;
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  #toast.show {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
-
-  /* ── Loading ── */
-  #loading {
-    position: fixed; /* 修正：让 loading 始终在屏幕中央 */
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(15,17,23,0.8);
-    z-index: 500;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .spinner {
-    width: 32px; height: 32px;
-    border: 2px solid var(--border);
-    border-top-color: var(--green);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── Admin bottom bar ── */
-  #admin-hint {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 10px 16px;
-    background: rgba(239,68,68,0.95);
-    border-top: 1px solid rgba(239,68,68,0.2);
-    font-size: 12px;
-    color: white;
-    font-weight: 600;
-    text-align: center;
-    z-index: 100;
-  }
-
-  body.is-admin #admin-hint { display: block; }
+  :root { --bg:#0f1117;--surface:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.12);--text:#f0f0f0;--muted:rgba(255,255,255,0.45);--green:#22c55e;--red:#ef4444; }
+  body { font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column; }
+  #header { display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(15,17,23,.97);border-bottom:1px solid var(--border);flex-shrink:0;z-index:20; }
+  #header h1 { font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase; }
+  #mode-badge { font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--border);letter-spacing:.03em; }
+  #mode-badge.admin { background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#fca5a5; }
+  #legend { display:flex;gap:16px;padding:8px 16px;background:rgba(15,17,23,.92);border-bottom:1px solid var(--border);flex-shrink:0; }
+  .li { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted); }
+  .dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
+  .dot.g { background:var(--green); } .dot.r { background:var(--red); }
+  #map-wrapper { flex:1;position:relative;overflow:hidden; }
+  #map-bg { position:absolute;inset:0;background-image:url('mapa.jpg');background-size:cover;background-position:center;filter:brightness(.65) saturate(.8); }
+  .pin { position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;user-select:none;-webkit-tap-highlight-color:transparent; }
+  .pin-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:white;transition:transform .15s;border:2px solid rgba(255,255,255,.2); }
+  .pin.disponible .pin-circle { background:var(--green);box-shadow:0 0 0 6px rgba(34,197,94,.2);animation:pg 2.5s infinite; }
+  .pin.ocupado .pin-circle { background:var(--red);box-shadow:0 0 0 6px rgba(239,68,68,.2); }
+  @keyframes pg { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)} 70%{box-shadow:0 0 0 10px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
+  .pin-label { font-size:9px;font-weight:500;background:rgba(0,0,0,.8);color:white;padding:2px 5px;border-radius:3px;white-space:nowrap;max-width:80px;text-align:center;line-height:1.3; }
+  .pin-team { font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;display:none; }
+  .history-dots { display:flex;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:center; }
+  .hdot { width:7px;height:7px;border-radius:50%;opacity:.85; }
+  body.is-admin .pin { cursor:pointer; }
+  body.is-admin .pin:active .pin-circle { transform:scale(.88); }
+  #sheet-bg { position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:30;display:none;align-items:flex-end; }
+  #sheet-bg.open { display:flex; }
+  #sheet { background:#161b27;border-radius:18px 18px 0 0;border:.5px solid var(--border);width:100%;padding:18px 16px 32px; }
+  #sheet-handle { width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 16px; }
+  #sheet-title { font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px; }
+  #sheet-sub { font-size:12px;color:var(--muted);margin-bottom:16px; }
+  #teams-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px; }
+  .team-btn { padding:10px;border-radius:10px;border:.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;text-align:left; }
+  .team-btn:hover { background:rgba(255,255,255,.1); }
+  .team-btn.done { opacity:.45; }
+  .team-btn.active { border-width:1.5px; }
+  .team-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+  #end-btn { width:100%;padding:12px;border-radius:10px;border:.5px solid rgba(34,197,94,.35);background:rgba(34,197,94,.1);color:#86efac;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:none;margin-bottom:8px; }
+  #end-btn.show { display:block; }
+  #cancel-btn { width:100%;padding:8px;border-radius:10px;border:none;background:transparent;color:rgba(255,255,255,.3);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer; }
+  #scoreboard { background:rgba(10,12,18,.95);border-top:1px solid var(--border);padding:10px 16px;flex-shrink:0; }
+  #scoreboard h3 { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px; }
+  #score-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:6px; }
+  .score-card { background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 8px;display:flex;align-items:center;gap:6px; }
+  .sc-dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
+  .sc-info { flex:1;min-width:0; }
+  .sc-name { font-size:10px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .sc-count { font-size:9px;color:var(--muted); }
+  .sc-bar-wrap { height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:3px;overflow:hidden; }
+  .sc-bar { height:100%;border-radius:1px;transition:width .4s ease; }
+  #admin-bar { display:none;padding:8px 16px;background:rgba(239,68,68,.08);border-top:1px solid rgba(239,68,68,.18);font-size:11px;color:#fca5a5;text-align:center;flex-shrink:0; }
+  body.is-admin #admin-bar { display:block; }
+  #toast { position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(20,22,30,.96);border:1px solid var(--border);color:white;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:100;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap; }
+  #toast.show { transform:translateX(-50%) translateY(0);opacity:1; }
+  #loading { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,17,23,.85);z-index:50;flex-direction:column;gap:12px; }
+  .spinner { width:30px;height:30px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 </style>
 </head>
 <body>
-
-<div id="top-bar">
-  <div id="header">
-    <h1>🏕 Campamento 2026</h1>
-    <span id="mode-badge">👀 Vista equipo</span>
-  </div>
-  <div id="legend">
-    <div class="legend-item"><span class="dot green"></span>Disponible – podéis venir</div>
-    <div class="legend-item"><span class="dot red"></span>Ocupado – esperad</div>
+<div id="header">
+  <h1>🏕 Campamento 2026</h1>
+  <span id="mode-badge">👀 Vista equipo</span>
+</div>
+<div id="legend">
+  <div class="li"><span class="dot g"></span>Disponible</div>
+  <div class="li"><span class="dot r"></span>Ocupado</div>
+</div>
+<div id="map-wrapper">
+  <div id="map-bg"></div>
+  <div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
+  <div id="sheet-bg">
+    <div id="sheet">
+      <div id="sheet-handle"></div>
+      <div id="sheet-title">¿Qué grupo viene?</div>
+      <div id="sheet-sub">Selecciona el grupo que empieza a jugar</div>
+      <div id="teams-grid"></div>
+      <button id="end-btn" onclick="endGame()">✓ Terminar juego — marcar disponible</button>
+      <button id="cancel-btn" onclick="closeSheet()">Cancelar</button>
+    </div>
   </div>
 </div>
-
-<div id="map-content">
-  </div>
-
-<div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
-
-<div id="admin-hint">✏️ Toca un pin para cambiar disponibilidad</div>
-
+<div id="scoreboard">
+  <h3>🏆 Juegos completados por grupo</h3>
+  <div id="score-grid"></div>
+</div>
+<div id="admin-bar">✏️ Toca un pin para cambiar el estado del juego</div>
 <div id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
+// 🔧 REEMPLAZA CON TU CONFIGURACIÓN FIREBASE
 const firebaseConfig = {
-            apiKey: "AIzaSyARJusoebHjF9LrkinDk4Gk8cyUFQl5QAI",
-            authDomain: "biblecamp-2026-f56cd.firebaseapp.com",
-            databaseURL: "https://biblecamp-2026-f56cd-default-rtdb.europe-west1.firebasedatabase.app", 
-            projectId: "biblecamp-2026-f56cd",
-            storageBucket: "biblecamp-2026-f56cd.firebasestorage.app",
-            messagingSenderId: "790291486057",
-            appId: "1:790291486057:web:3262215eaee626fc8219f8"
-        };
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 
+// EQUIPOS
+const TEAMS = [
+  { id:"g1", name:"Grupo 1", color:"#a78bfa" },
+  { id:"g2", name:"Grupo 2", color:"#38bdf8" },
+  { id:"g3", name:"Grupo 3", color:"#fb923c" },
+  { id:"g4", name:"Grupo 4", color:"#f472b6" },
+  { id:"g5", name:"Grupo 5", color:"#34d399" },
+  { id:"g6", name:"Grupo 6", color:"#fbbf24" },
+];
+
+// ESTACIONES — ajusta left/top % según tu mapa
 const STATIONS = [
-  { id: "entrada",    label: "Entrada",       num: "1", left: "7%",  top: "50%" },
-  { id: "spau",       label: "S. Pau",         num: "2", left: "27%", top: "38%" },
-  { id: "comedor",    label: "Comedor",        num: "3", left: "52%", top: "33%" },
-  { id: "msol",       label: "M. Sol",         num: "4", left: "52%", top: "57%" },
-  { id: "vbertran",   label: "V. Bertran",     num: "5", left: "65%", top: "48%" },
-  { id: "sjuan",      label: "S. Juan",        num: "6", left: "78%", top: "37%" },
-  { id: "salaPrinc",  label: "Sala principal", num: "7", left: "65%", top: "67%" },
+  { id:"entrada",   label:"Entrada",      num:"1", left:"7%",  top:"50%" },
+  { id:"spau",      label:"S. Pau",        num:"2", left:"27%", top:"38%" },
+  { id:"comedor",   label:"Comedor",       num:"3", left:"52%", top:"33%" },
+  { id:"msol",      label:"M. Sol",        num:"4", left:"52%", top:"57%" },
+  { id:"vbertran",  label:"V. Bertran",    num:"5", left:"65%", top:"48%" },
+  { id:"sjuan",     label:"S. Juan",       num:"6", left:"78%", top:"37%" },
+  { id:"salaPrinc", label:"Sala Ppal.",    num:"7", left:"65%", top:"67%" },
 ];
 
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
-
 const urlParams = new URLSearchParams(window.location.search);
-const isAdmin   = urlParams.get('role') === 'guia';
-
+const isAdmin = urlParams.get('role') === 'guia';
 if (isAdmin) {
   document.body.classList.add('is-admin');
   document.getElementById('mode-badge').textContent = '🔧 Modo guía';
   document.getElementById('mode-badge').classList.add('admin');
 }
 
-/* 注意：这里的目标改成了 map-content，确保点落在放大的地图上 */
-const mapContent = document.getElementById('map-content');
 let currentStates = {};
+let activeStation = null;
+let toastTimer;
 
+const mapWrapper = document.getElementById('map-wrapper');
 STATIONS.forEach(s => {
-  const pin = document.createElement('div');
-  pin.className = 'pin disponible';
-  pin.id = 'pin-' + s.id;
-  pin.setAttribute('data-id', s.id);
-  pin.style.left  = s.left;
-  pin.style.top   = s.top;
-
-  pin.innerHTML = `
-    <div class="pin-circle">${s.num}</div>
-    <div class="pin-label">${s.label}</div>
-  `;
-
-  if (isAdmin) {
-    pin.addEventListener('click', () => toggleStation(s.id));
-  }
-
-  mapContent.appendChild(pin);
+  const p = document.createElement('div');
+  p.className = 'pin disponible';
+  p.id = 'pin-' + s.id;
+  p.style.left = s.left; p.style.top = s.top;
+  p.innerHTML = `<div class="pin-circle">${s.num}</div><div class="pin-label">${s.label}</div><div class="pin-team" id="pt-${s.id}"></div><div class="history-dots" id="hd-${s.id}"></div>`;
+  if (isAdmin) p.addEventListener('click', () => openSheet(s.id));
+  mapWrapper.appendChild(p);
 });
 
 onValue(ref(db, 'juegos'), snapshot => {
   document.getElementById('loading').style.display = 'none';
-  const data = snapshot.val() || {};
-  currentStates = data;
-
-  STATIONS.forEach(s => {
-    const status = data[s.id] || 'disponible';
-    const pin = document.getElementById('pin-' + s.id);
-    if (pin) {
-      pin.className = 'pin ' + status;
-    }
-  });
+  currentStates = snapshot.val() || {};
+  STATIONS.forEach(s => renderPin(s.id));
+  renderScoreboard();
 });
 
-function toggleStation(id) {
-  const current  = currentStates[id] || 'disponible';
-  const next     = current === 'disponible' ? 'ocupado' : 'disponible';
-  const label    = STATIONS.find(s => s.id === id)?.label || id;
-
-  set(ref(db, 'juegos/' + id), next)
-    .then(() => showToast(next === 'ocupado'
-      ? `🔴 ${label} → Ocupado`
-      : `🟢 ${label} → Disponible`))
-    .catch(err => {
-      console.error(err);
-      showToast('❌ Error al actualizar');
-    });
+function renderPin(id) {
+  const data = currentStates[id] || { status:'disponible', currentTeam:null, history:[] };
+  const pin = document.getElementById('pin-' + id);
+  const ptEl = document.getElementById('pt-' + id);
+  const hdEl = document.getElementById('hd-' + id);
+  pin.className = 'pin ' + (data.status || 'disponible');
+  if (data.currentTeam) {
+    const t = TEAMS.find(t => t.id === data.currentTeam);
+    if (t) { ptEl.style.display='block'; ptEl.textContent=t.name; ptEl.style.background=hexToRgba(t.color,.25); ptEl.style.color=t.color; ptEl.style.border=`0.5px solid ${hexToRgba(t.color,.5)}`; }
+  } else { ptEl.style.display='none'; }
+  const history = data.history || [];
+  hdEl.innerHTML = history.map(tid => { const t=TEAMS.find(t=>t.id===tid); return t?`<span class="hdot" style="background:${t.color}" title="${t.name}"></span>`:''; }).join('');
 }
 
-let toastTimer;
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+function renderScoreboard() {
+  const counts = {}; TEAMS.forEach(t => counts[t.id]=0);
+  STATIONS.forEach(s => { const h=(currentStates[s.id]||{}).history||[]; h.forEach(tid=>{ if(counts[tid]!==undefined) counts[tid]++; }); });
+  const max = Math.max(...Object.values(counts), 1);
+  document.getElementById('score-grid').innerHTML = TEAMS.map(t => `<div class="score-card"><span class="sc-dot" style="background:${t.color}"></span><div class="sc-info"><div class="sc-name">${t.name}</div><div class="sc-count">${counts[t.id]} juego${counts[t.id]!==1?'s':''}</div><div class="sc-bar-wrap"><div class="sc-bar" style="width:${Math.round(counts[t.id]/max*100)}%;background:${t.color}"></div></div></div></div>`).join('');
 }
+
+window.openSheet = function(stationId) {
+  activeStation = stationId;
+  const data = currentStates[stationId] || { status:'disponible', currentTeam:null, history:[] };
+  const station = STATIONS.find(s => s.id === stationId);
+  const isOcup = data.status === 'ocupado';
+  document.getElementById('sheet-title').textContent = isOcup ? `${station.label} — En juego` : `${station.label} — ¿Qué grupo viene?`;
+  document.getElementById('sheet-sub').textContent = isOcup ? 'Termina el juego o cambia de grupo' : 'Selecciona el grupo que empieza a jugar';
+  const history = data.history || [];
+  document.getElementById('teams-grid').innerHTML = TEAMS.map(t => { const done=history.includes(t.id); const active=data.currentTeam===t.id; return `<button class="team-btn${done?' done':''}${active?' active':''}" style="${active?`background:${hexToRgba(t.color,.15)};border-color:${hexToRgba(t.color,.6)}`:''}" onclick="selectTeam('${t.id}')"><span class="team-dot" style="background:${t.color}"></span>${t.name}${done?' ✓':''}</button>`; }).join('');
+  document.getElementById('end-btn').classList.toggle('show', isOcup);
+  document.getElementById('sheet-bg').classList.add('open');
+};
+
+window.selectTeam = async function(teamId) {
+  const stationRef = ref(db, 'juegos/' + activeStation);
+  const snap = await get(stationRef);
+  const current = snap.val() || { status:'disponible', currentTeam:null, history:[] };
+  const history = current.history || [];
+  if (!history.includes(teamId)) history.push(teamId);
+  await set(stationRef, { status:'ocupado', currentTeam:teamId, history });
+  const t = TEAMS.find(t=>t.id===teamId); const s = STATIONS.find(s=>s.id===activeStation);
+  showToast(`🔴 ${s.label} → ${t.name} jugando`);
+  closeSheet();
+};
+
+window.endGame = async function() {
+  const stationRef = ref(db, 'juegos/' + activeStation);
+  const snap = await get(stationRef);
+  const current = snap.val() || {};
+  await set(stationRef, { status:'disponible', currentTeam:null, history:current.history||[] });
+  showToast(`🟢 ${STATIONS.find(s=>s.id===activeStation).label} → Disponible`);
+  closeSheet();
+};
+
+window.closeSheet = function() { document.getElementById('sheet-bg').classList.remove('open'); activeStation=null; };
+
+function showToast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2600); }
+function hexToRgba(hex,a) { const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; }
 </script>
 </body>
 </html>
