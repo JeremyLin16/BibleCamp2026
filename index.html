@@ -24,8 +24,13 @@
   .dot.g { background:var(--green); } .dot.r { background:var(--red); }
 
   /* Map */
-  #map-wrapper { flex:1;position:relative;overflow:hidden; }
+  #map-wrapper { flex:1;position:relative;overflow:hidden;background:#0a0d14;touch-action:none; }
+  #map-canvas { position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;cursor:grab; }
+  #map-canvas:active { cursor:grabbing; }
   #map-bg { position:absolute;inset:0;background-image:url('mapa.jpg');background-size:cover;background-position:center;filter:brightness(.65) saturate(.8); }
+  #zoom-btns { position:absolute;bottom:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:25; }
+  .zoom-btn { width:36px;height:36px;border-radius:10px;background:rgba(22,27,39,.92);border:.5px solid var(--border);color:var(--text);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:background .15s;user-select:none;-webkit-tap-highlight-color:transparent; }
+  .zoom-btn:active { background:rgba(255,255,255,.12); }
 
   /* Pins */
   .pin { position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;user-select:none;-webkit-tap-highlight-color:transparent; }
@@ -117,8 +122,14 @@
 </div>
 
 <div id="map-wrapper">
-  <div id="map-bg"></div>
+  <div id="map-canvas">
+    <div id="map-bg"></div>
+  </div>
   <div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
+  <div id="zoom-btns">
+    <button class="zoom-btn" id="btn-zoom-in">+</button>
+    <button class="zoom-btn" id="btn-zoom-out">−</button>
+  </div>
 
   <div id="sheet-bg">
     <div id="sheet">
@@ -202,6 +213,8 @@ let toastTimer;
 
 /* ── BUILD PINS ── */
 const mapWrapper = document.getElementById('map-wrapper');
+const mapCanvas  = document.getElementById('map-canvas');
+
 STATIONS.forEach(s => {
   const p = document.createElement('div');
   p.className   = 'pin disponible';
@@ -213,9 +226,181 @@ STATIONS.forEach(s => {
     <div class="pin-label">${s.label}</div>
     <div class="pin-team"  id="pt-${s.id}"></div>
     <div class="history-dots" id="hd-${s.id}"></div>`;
-  if (isAdmin) p.addEventListener('click', () => openSheet(s.id));
-  mapWrapper.appendChild(p);
+  // Use pointerdown/up for tap detection that doesn't fire during panning
+  if (isAdmin) {
+    p.addEventListener('pointerdown', e => { e.stopPropagation(); });
+    p.addEventListener('click', e => { if (!wasPanning) openSheet(s.id); });
+  }
+  mapCanvas.appendChild(p);
 });
+
+/* ── PAN & ZOOM ENGINE ── */
+let tx = 0, ty = 0, scale = 1;
+let minScale, fitScale;
+const MAX_SCALE = 4;
+let wasPanning = false;
+
+// Image natural size via a probe Image object
+const probe = new Image();
+probe.src = 'mapa.jpg';
+probe.onload = () => initMap(probe.naturalWidth, probe.naturalHeight);
+// Fallback if already cached
+if (probe.complete && probe.naturalWidth) initMap(probe.naturalWidth, probe.naturalHeight);
+
+function initMap(imgW, imgH) {
+  const wW = mapWrapper.clientWidth;
+  const wH = mapWrapper.clientHeight;
+  // Scale to fit fully inside wrapper
+  fitScale  = Math.min(wW / imgW, wH / imgH);
+  minScale  = fitScale * 0.9;
+  scale     = fitScale;
+  // Center the map
+  tx = (wW - imgW * scale) / 2;
+  ty = (wH - imgH * scale) / 2;
+  mapCanvas.style.width  = imgW + 'px';
+  mapCanvas.style.height = imgH + 'px';
+  applyTransform(false);
+}
+
+function applyTransform(animated) {
+  mapCanvas.style.transition = animated ? 'transform .25s ease' : 'none';
+  mapCanvas.style.transform  = `translate(${tx}px,${ty}px) scale(${scale})`;
+}
+
+function clampTranslation() {
+  const wW  = mapWrapper.clientWidth;
+  const wH  = mapWrapper.clientHeight;
+  const cW  = parseFloat(mapCanvas.style.width  || 0) * scale;
+  const cH  = parseFloat(mapCanvas.style.height || 0) * scale;
+  const minTx = Math.min(0, wW - cW);
+  const minTy = Math.min(0, wH - cH);
+  const maxTx = cW < wW ? (wW - cW) / 2 : 0;
+  const maxTy = cH < wH ? (wH - cH) / 2 : 0;
+  tx = Math.max(minTx, Math.min(maxTx, tx));
+  ty = Math.max(minTy, Math.min(maxTy, ty));
+}
+
+// ── TOUCH EVENTS ──
+let touch1 = null, touch2 = null;
+let lastMidX = 0, lastMidY = 0, lastDist = 0;
+let touchStartX = 0, touchStartY = 0, touchMoved = false;
+
+mapWrapper.addEventListener('touchstart', e => {
+  if (document.getElementById('sheet-bg').classList.contains('open')) return;
+  touchMoved  = false;
+  wasPanning  = false;
+  if (e.touches.length === 1) {
+    touch1      = e.touches[0];
+    touch2      = null;
+    touchStartX = touch1.clientX;
+    touchStartY = touch1.clientY;
+    lastMidX    = touch1.clientX;
+    lastMidY    = touch1.clientY;
+  } else if (e.touches.length === 2) {
+    touch1   = e.touches[0];
+    touch2   = e.touches[1];
+    lastDist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+    lastMidX = (touch1.clientX + touch2.clientX) / 2;
+    lastMidY = (touch1.clientY + touch2.clientY) / 2;
+  }
+  e.preventDefault();
+}, { passive: false });
+
+mapWrapper.addEventListener('touchmove', e => {
+  if (document.getElementById('sheet-bg').classList.contains('open')) return;
+  e.preventDefault();
+
+  if (e.touches.length === 1 && !touch2) {
+    const t   = e.touches[0];
+    const dx  = t.clientX - lastMidX;
+    const dy  = t.clientY - lastMidY;
+    if (Math.abs(t.clientX - touchStartX) > 5 || Math.abs(t.clientY - touchStartY) > 5) {
+      touchMoved = true; wasPanning = true;
+    }
+    tx += dx; ty += dy;
+    lastMidX = t.clientX; lastMidY = t.clientY;
+    clampTranslation();
+    applyTransform(false);
+  } else if (e.touches.length === 2) {
+    touchMoved = true; wasPanning = true;
+    const t1  = e.touches[0], t2 = e.touches[1];
+    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    const midX = (t1.clientX + t2.clientX) / 2;
+    const midY = (t1.clientY + t2.clientY) / 2;
+    const rect = mapWrapper.getBoundingClientRect();
+    const ratio = dist / lastDist;
+
+    // Zoom toward pinch center
+    const originX = midX - rect.left;
+    const originY = midY - rect.top;
+    const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale * ratio));
+    tx = originX - (originX - tx) * (newScale / scale);
+    ty = originY - (originY - ty) * (newScale / scale);
+    scale  = newScale;
+    lastDist = dist;
+
+    // Also pan
+    tx += midX - lastMidX;
+    ty += midY - lastMidY;
+    lastMidX = midX; lastMidY = midY;
+    clampTranslation();
+    applyTransform(false);
+  }
+}, { passive: false });
+
+mapWrapper.addEventListener('touchend', e => {
+  if (e.touches.length < 2) touch2 = null;
+  if (e.touches.length === 0) touch1 = null;
+  setTimeout(() => { wasPanning = false; }, 50);
+});
+
+// ── MOUSE EVENTS (desktop) ──
+let mouseDown = false, mouseStartX = 0, mouseStartY = 0;
+mapWrapper.addEventListener('mousedown', e => {
+  if (e.target.closest('#sheet-bg, #zoom-btns, #loading')) return;
+  mouseDown  = true; wasPanning = false;
+  mouseStartX = e.clientX - tx;
+  mouseStartY = e.clientY - ty;
+});
+window.addEventListener('mousemove', e => {
+  if (!mouseDown) return;
+  tx = e.clientX - mouseStartX;
+  ty = e.clientY - mouseStartY;
+  wasPanning = true;
+  clampTranslation();
+  applyTransform(false);
+});
+window.addEventListener('mouseup', () => {
+  mouseDown = false;
+  setTimeout(() => { wasPanning = false; }, 50);
+});
+mapWrapper.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect   = mapWrapper.getBoundingClientRect();
+  const originX = e.clientX - rect.left;
+  const originY = e.clientY - rect.top;
+  const delta   = e.deltaY > 0 ? 0.85 : 1.18;
+  const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale * delta));
+  tx = originX - (originX - tx) * (newScale / scale);
+  ty = originY - (originY - ty) * (newScale / scale);
+  scale = newScale;
+  clampTranslation();
+  applyTransform(false);
+}, { passive: false });
+
+// ── ZOOM BUTTONS ──
+document.getElementById('btn-zoom-in').addEventListener('click', () => zoomButton(1.35));
+document.getElementById('btn-zoom-out').addEventListener('click', () => zoomButton(1/1.35));
+function zoomButton(factor) {
+  const wW = mapWrapper.clientWidth, wH = mapWrapper.clientHeight;
+  const originX = wW / 2, originY = wH / 2;
+  const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale * factor));
+  tx = originX - (originX - tx) * (newScale / scale);
+  ty = originY - (originY - ty) * (newScale / scale);
+  scale = newScale;
+  clampTranslation();
+  applyTransform(true);
+}
 
 /* ── REALTIME LISTENER ── */
 onValue(ref(db, 'juegos'), snapshot => {
