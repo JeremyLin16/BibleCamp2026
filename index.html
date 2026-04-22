@@ -2,24 +2,41 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mapa Campamento 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root { --bg:#0f1117;--surface:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.12);--text:#f0f0f0;--muted:rgba(255,255,255,0.45);--green:#22c55e;--red:#ef4444; }
+  
+  /* body 保持固定，不整体反弹 */
   body { font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden;display:flex;flex-direction:column; }
+  
   #header { display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(15,17,23,.97);border-bottom:1px solid var(--border);flex-shrink:0;z-index:20; }
   #header h1 { font-family:'Syne',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase; }
   #mode-badge { font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--border);letter-spacing:.03em; }
   #mode-badge.admin { background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#fca5a5; }
+  
   #legend { display:flex;gap:16px;padding:8px 16px;background:rgba(15,17,23,.92);border-bottom:1px solid var(--border);flex-shrink:0; }
   .li { display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted); }
   .dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
   .dot.g { background:var(--green); } .dot.r { background:var(--red); }
-  #map-wrapper { flex:1;position:relative;overflow:hidden; }
-  #map-bg { position:absolute;inset:0;background-image:url('mapa.jpg');background-size:cover;background-position:center;filter:brightness(.65) saturate(.8); }
+  
+  /* 【修复 2】wrapper 允许内部滚动 (overflow: auto) */
+  #map-wrapper { flex:1;position:relative;overflow:auto; -webkit-overflow-scrolling: touch; }
+  
+  /* 【修复 3】建立一个巨大的固定画布，地图永远不会变形 */
+  #map-content { 
+      position:relative; 
+      width: 1200px; 
+      height: 900px; 
+      background-image:url('mapa.jpg');
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      filter:brightness(.65) saturate(.8); 
+  }
+  
   .pin { position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;user-select:none;-webkit-tap-highlight-color:transparent; }
   .pin-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:white;transition:transform .15s;border:2px solid rgba(255,255,255,.2); }
   .pin.disponible .pin-circle { background:var(--green);box-shadow:0 0 0 6px rgba(34,197,94,.2);animation:pg 2.5s infinite; }
@@ -31,7 +48,9 @@
   .hdot { width:7px;height:7px;border-radius:50%;opacity:.85; }
   body.is-admin .pin { cursor:pointer; }
   body.is-admin .pin:active .pin-circle { transform:scale(.88); }
-  #sheet-bg { position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:30;display:none;align-items:flex-end; }
+  
+  /* 【修复 4】所有的浮层改成 position: fixed，确保在屏幕正中，不随地图滚动 */
+  #sheet-bg { position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:flex-end; }
   #sheet-bg.open { display:flex; }
   #sheet { background:#161b27;border-radius:18px 18px 0 0;border:.5px solid var(--border);width:100%;padding:18px 16px 32px; }
   #sheet-handle { width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 16px; }
@@ -46,7 +65,8 @@
   #end-btn { width:100%;padding:12px;border-radius:10px;border:.5px solid rgba(34,197,94,.35);background:rgba(34,197,94,.1);color:#86efac;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:none;margin-bottom:8px; }
   #end-btn.show { display:block; }
   #cancel-btn { width:100%;padding:8px;border-radius:10px;border:none;background:transparent;color:rgba(255,255,255,.3);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer; }
-  #scoreboard { background:rgba(10,12,18,.95);border-top:1px solid var(--border);padding:10px 16px;flex-shrink:0; }
+  
+  #scoreboard { background:rgba(10,12,18,.95);border-top:1px solid var(--border);padding:10px 16px;flex-shrink:0; z-index:20;}
   #scoreboard h3 { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px; }
   #score-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:6px; }
   .score-card { background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 8px;display:flex;align-items:center;gap:6px; }
@@ -56,11 +76,14 @@
   .sc-count { font-size:9px;color:var(--muted); }
   .sc-bar-wrap { height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:3px;overflow:hidden; }
   .sc-bar { height:100%;border-radius:1px;transition:width .4s ease; }
-  #admin-bar { display:none;padding:8px 16px;background:rgba(239,68,68,.08);border-top:1px solid rgba(239,68,68,.18);font-size:11px;color:#fca5a5;text-align:center;flex-shrink:0; }
+  
+  #admin-bar { display:none;padding:8px 16px;background:rgba(239,68,68,.08);border-top:1px solid rgba(239,68,68,.18);font-size:11px;color:#fca5a5;text-align:center;flex-shrink:0; z-index:20;}
   body.is-admin #admin-bar { display:block; }
-  #toast { position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(20,22,30,.96);border:1px solid var(--border);color:white;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:100;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap; }
+  
+  #toast { position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(20,22,30,.96);border:1px solid var(--border);color:white;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;z-index:600;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap; }
   #toast.show { transform:translateX(-50%) translateY(0);opacity:1; }
-  #loading { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,17,23,.85);z-index:50;flex-direction:column;gap:12px; }
+  
+  #loading { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,17,23,.85);z-index:500;flex-direction:column;gap:12px; }
   .spinner { width:30px;height:30px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 </style>
@@ -74,32 +97,34 @@
   <div class="li"><span class="dot g"></span>Disponible</div>
   <div class="li"><span class="dot r"></span>Ocupado</div>
 </div>
+
 <div id="map-wrapper">
-  <div id="map-bg"></div>
-  <div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
-  <div id="sheet-bg">
-    <div id="sheet">
-      <div id="sheet-handle"></div>
-      <div id="sheet-title">¿Qué grupo viene?</div>
-      <div id="sheet-sub">Selecciona el grupo que empieza a jugar</div>
-      <div id="teams-grid"></div>
-      <button id="end-btn" onclick="endGame()">✓ Terminar juego — marcar disponible</button>
-      <button id="cancel-btn" onclick="closeSheet()">Cancelar</button>
-    </div>
-  </div>
+  <div id="map-content"></div>
 </div>
+
 <div id="scoreboard">
   <h3>🏆 Juegos completados por grupo</h3>
   <div id="score-grid"></div>
 </div>
 <div id="admin-bar">✏️ Toca un pin para cambiar el estado del juego</div>
+
+<div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
+<div id="sheet-bg">
+  <div id="sheet">
+    <div id="sheet-handle"></div>
+    <div id="sheet-title">¿Qué grupo viene?</div>
+    <div id="sheet-sub">Selecciona el grupo que empieza a jugar</div>
+    <div id="teams-grid"></div>
+    <button id="end-btn" onclick="endGame()">✓ Terminar juego — marcar disponible</button>
+    <button id="cancel-btn" onclick="closeSheet()">Cancelar</button>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-// 🔧 REEMPLAZA CON TU CONFIGURACIÓN FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyARJusoebHjF9LrkinDk4Gk8cyUFQl5QAI",
   authDomain: "biblecamp-2026-f56cd.firebaseapp.com",
@@ -111,7 +136,6 @@ const firebaseConfig = {
   measurementId: "G-QG1SV7F8P4"
 };
 
-// EQUIPOS
 const TEAMS = [
   { id:"g1", name:"Grupo 1", color:"#a78bfa" },
   { id:"g2", name:"Grupo 2", color:"#38bdf8" },
@@ -121,7 +145,6 @@ const TEAMS = [
   { id:"g6", name:"Grupo 6", color:"#fbbf24" },
 ];
 
-// ESTACIONES — ajusta left/top % según tu mapa
 const STATIONS = [
   { id:"entrada",   label:"Entrada",      num:"1", left:"7%",  top:"50%" },
   { id:"spau",      label:"S. Pau",        num:"2", left:"27%", top:"38%" },
@@ -136,6 +159,7 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const urlParams = new URLSearchParams(window.location.search);
 const isAdmin = urlParams.get('role') === 'guia';
+
 if (isAdmin) {
   document.body.classList.add('is-admin');
   document.getElementById('mode-badge').textContent = '🔧 Modo guía';
@@ -146,7 +170,8 @@ let currentStates = {};
 let activeStation = null;
 let toastTimer;
 
-const mapWrapper = document.getElementById('map-wrapper');
+// 【关键修复 5】将打卡的按钮(pins)添加到巨大的 mapContent 中，而不是外部的 wrapper 中，这样点位会跟着地图一起滑动
+const mapContent = document.getElementById('map-content');
 STATIONS.forEach(s => {
   const p = document.createElement('div');
   p.className = 'pin disponible';
@@ -154,7 +179,7 @@ STATIONS.forEach(s => {
   p.style.left = s.left; p.style.top = s.top;
   p.innerHTML = `<div class="pin-circle">${s.num}</div><div class="pin-label">${s.label}</div><div class="pin-team" id="pt-${s.id}"></div><div class="history-dots" id="hd-${s.id}"></div>`;
   if (isAdmin) p.addEventListener('click', () => openSheet(s.id));
-  mapWrapper.appendChild(p);
+  mapContent.appendChild(p); 
 });
 
 onValue(ref(db, 'juegos'), snapshot => {
