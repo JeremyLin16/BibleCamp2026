@@ -25,11 +25,18 @@
     font-family: 'DM Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
-    height: 100dvh;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
   }
+
+ #top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: flex;
+  flex-direction: column;
+ }
 
   /* ── Header ── */
   #header {
@@ -39,8 +46,6 @@
     padding: 12px 16px;
     background: rgba(15,17,23,0.95);
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    z-index: 20;
   }
 
   #header h1 {
@@ -70,7 +75,6 @@
     padding: 8px 16px;
     background: rgba(15,17,23,0.9);
     border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
   }
 
   .legend-item {
@@ -96,22 +100,17 @@
     overflow: hidden;
   }
 
-  #map-bg {
-    position: absolute;
-    inset: 0;
-    background-image: url('mapa.jpg');
-    background-size: cover;
-    background-position: center;
-    filter: brightness(0.65) saturate(0.8);
-  }
-
-  /* Dark overlay for contrast */
-  #map-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 100%);
-    pointer-events: none;
-  }
+ #map-content {
+  position: relative;
+  width: 1200px;
+  height: 900px;
+  background-image: url('mapa.jpg');
+  background-size: 100% 100%
+  background-repeat: no-repeat;
+  background-position: top left;
+  filter: brightness(0.65) saturate(0.8);
+  margin: 0 auto;
+ }
 
   /* ── Pins ── */
   .pin {
@@ -206,13 +205,13 @@
 
   /* ── Loading ── */
   #loading {
-    position: absolute;
+    position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(15,17,23,0.8);
-    z-index: 50;
+    z-index: 500;
     flex-direction: column;
     gap: 12px;
   }
@@ -314,7 +313,7 @@ if (isAdmin) {
 }
 
 /* Build pins */
-const mapWrapper = document.getElementById('map-wrapper');
+const mapContent = document.getElementById('map-content');
 let currentStates = {};
 
 STATIONS.forEach(s => {
