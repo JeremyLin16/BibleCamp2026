@@ -226,9 +226,26 @@ STATIONS.forEach(s => {
     <div class="pin-label">${s.label}</div>
     <div class="pin-team"  id="pt-${s.id}"></div>
     <div class="history-dots" id="hd-${s.id}"></div>`;
-  // Use pointerdown/up for tap detection that doesn't fire during panning
   if (isAdmin) {
-    p.addEventListener('pointerdown', e => { e.stopPropagation(); });
+    // On mobile, touchstart on wrapper uses preventDefault() which kills 'click'.
+    // So we detect taps manually: touchstart records position, touchend fires if
+    // finger didn't move more than 10px — that's a tap, not a pan.
+    let pinTouchStartX = 0, pinTouchStartY = 0;
+    p.addEventListener('touchstart', e => {
+      e.stopPropagation();          // don't let wrapper start panning
+      pinTouchStartX = e.touches[0].clientX;
+      pinTouchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    p.addEventListener('touchend', e => {
+      e.stopPropagation();
+      const dx = e.changedTouches[0].clientX - pinTouchStartX;
+      const dy = e.changedTouches[0].clientY - pinTouchStartY;
+      if (Math.hypot(dx, dy) < 10) {  // it's a tap
+        e.preventDefault();           // prevent ghost click
+        openSheet(s.id);
+      }
+    });
+    // Desktop fallback
     p.addEventListener('click', e => { if (!wasPanning) openSheet(s.id); });
   }
   mapCanvas.appendChild(p);
