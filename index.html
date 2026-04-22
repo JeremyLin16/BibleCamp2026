@@ -5,11 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Mapa Campamento 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;
-
-
-
-500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root { --bg:#0f1117;--surface:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.12);--text:#f0f0f0;--muted:rgba(255,255,255,0.45);--green:#22c55e;--red:#ef4444; }
@@ -164,8 +160,7 @@ const firebaseConfig = {
   projectId: "biblecamp-2026-f56cd",
   storageBucket: "biblecamp-2026-f56cd.firebasestorage.app",
   messagingSenderId: "790291486057",
-  appId: "1:790291486057:web:3262215eaee626fc8219f8",
-  measurementId: "G-QG1SV7F8P4"
+  appId: "1:790291486057:web:3262215eaee626fc8219f8"
 };
 
 /* ── EQUIPOS ── */
@@ -232,7 +227,7 @@ onValue(ref(db, 'juegos'), snapshot => {
 
 /* ── RENDER PIN ── */
 function renderPin(id) {
-  const d   = currentStates[id] || { status:'disponible', currentTeam:null, history:[] };
+  const d   = currentStates[id] || { status:'disponible', currentTeam:'', history:[] };
   const pin = document.getElementById('pin-' + id);
   const pt  = document.getElementById('pt-' + id);
   const hd  = document.getElementById('hd-' + id);
@@ -278,7 +273,7 @@ function renderScoreboard() {
 window.openSheet = function(stationId) {
   activeStation = stationId;
   const station = STATIONS.find(s => s.id === stationId);
-  const d       = currentStates[stationId] || { status:'disponible', currentTeam:null, history:[] };
+  const d       = currentStates[stationId] || { status:'disponible', currentTeam:'', history:[] };
 
   document.getElementById('sheet-title').textContent = station.label;
   document.getElementById('sheet-sub').textContent   = 'Gestiona el estado y los grupos';
@@ -330,7 +325,7 @@ function renderTeamsGrid(d) {
 window.toggleTeam = async function(teamId) {
   const stationRef = ref(db, 'juegos/' + activeStation);
   const snap    = await get(stationRef);
-  const current = snap.val() || { status:'disponible', currentTeam:null, history:[] };
+  const current = snap.val() || { status:'disponible', currentTeam:'', history:[] };
   let   history = current.history ? [...current.history] : [];
   let   { status, currentTeam } = current;
 
@@ -341,8 +336,7 @@ window.toggleTeam = async function(teamId) {
     // ── CANCEL: remove from history ──
     history     = history.filter(id => id !== teamId);
     if (currentTeam === teamId) {
-      currentTeam = null;
-      // If no other team is playing right now, set disponible
+      currentTeam = '';   // Firebase no acepta null → usar string vacío
       status = 'disponible';
     }
     showToast(`↩ ${t.name} eliminado de ${s.label}`);
@@ -370,10 +364,10 @@ window.toggleTeam = async function(teamId) {
 window.setStatus = async function(newStatus) {
   const stationRef = ref(db, 'juegos/' + activeStation);
   const snap    = await get(stationRef);
-  const current = snap.val() || { status:'disponible', currentTeam:null, history:[] };
+  const current = snap.val() || { status:'disponible', currentTeam:'', history:[] };
 
   // If setting disponible, clear currentTeam
-  const currentTeam = newStatus === 'disponible' ? null : current.currentTeam;
+  const currentTeam = newStatus === 'disponible' ? '' : (current.currentTeam || '');
 
   await set(stationRef, { ...current, status: newStatus, currentTeam });
 
