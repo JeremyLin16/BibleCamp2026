@@ -101,13 +101,17 @@ import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/fir
 
 // 🔧 REEMPLAZA CON TU CONFIGURACIÓN FIREBASE
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyARJusoebHjF9LrkinDk4Gk8cyUFQl5QAI",
+  authDomain: "biblecamp-2026-f56cd.firebaseapp.com",
+            
+  // 【关键修改 2】必须加上 databaseURL。
+  // 注意：如果你在创建数据库时选的不是欧洲(europe-west1)，请把下面链接里的 "-default-rtdb.europe-west1.firebasedatabase.app" 替换成你在 Firebase 后台 Realtime Database 顶部看到的那个链接。
+  databaseURL: "https://biblecamp-2026-f56cd-default-rtdb.europe-west1.firebasedatabase.app", 
+            
+  projectId: "biblecamp-2026-f56cd",
+  storageBucket: "biblecamp-2026-f56cd.firebasestorage.app",
+  messagingSenderId: "790291486057",
+  appId: "1:790291486057:web:3262215eaee626fc8219f8"
 };
 
 // EQUIPOS
