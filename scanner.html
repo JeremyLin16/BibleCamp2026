@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Búsqueda del Tesoro</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+  /* ─── VARIABLES ─────────────────────────────────────── */
+  :root {
+    --forest:   #1a3a2a;
+    --deep:     #0d2218;
+    --gold:     #f5c842;
+    --gold2:    #e8a000;
+    --red:      #e84040;
+    --mist:     #8baaa0;
+    --white:    #f0ede6;
+    --task0:    #4ecdc4;
+    --task1:    #ff6b9d;
+    --task2:    #a78bfa;
+  }
+
+  /* ─── RESET & BASE ──────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--deep);
+    font-family: 'Nunito', sans-serif;
+    color: var(--white);
+    overflow: hidden;
+  }
+
+  /* ─── ANIMATED BACKGROUND ───────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 80%, rgba(26,58,42,0.8) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(13,34,24,0.9) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232d5a3d' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ─── SCREEN CONTAINER ──────────────────────────────── */
+  #app {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    gap: 16px;
+    animation: fadeUp 0.4s ease both;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── TYPOGRAPHY ────────────────────────────────────── */
+  .title {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
+    letter-spacing: 3px;
+    line-height: 1;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.4);
+  }
+  .subtitle {
+    font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+    font-weight: 700;
+    opacity: 0.85;
+    line-height: 1.4;
+  }
+
+  /* ─── CARDS ─────────────────────────────────────────── */
+  .card {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 24px 28px;
+    width: 100%;
+    backdrop-filter: blur(8px);
+  }
+
+  /* ─── EMOJI BIG ──────────────────────────────────────── */
+  .emoji-big {
+    font-size: clamp(4rem, 18vw, 6rem);
+    line-height: 1;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+  }
+
+  /* ─── LOADING SCREEN ─────────────────────────────────── */
+  #screen-loading .spinner {
+    width: 56px; height: 56px;
+    border: 5px solid rgba(245,200,66,0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  #screen-loading p { color: var(--mist); font-weight: 700; letter-spacing: 1px; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── FAKE SCREEN ────────────────────────────────────── */
+  #screen-fake .title { color: var(--mist); }
+  #screen-fake .cloud {
+    font-size: 5rem;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-12px); }
+  }
+
+  /* ─── TASK SCREEN ────────────────────────────────────── */
+  #screen-task .badge {
+    font-family: 'Bangers', cursive;
+    font-size: 0.95rem;
+    letter-spacing: 3px;
+    padding: 6px 16px;
+    border-radius: 50px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+  #screen-task .task-body {
+    font-size: clamp(1.15rem, 4.5vw, 1.35rem);
+    font-weight: 900;
+    line-height: 1.4;
+    margin-top: 8px;
+  }
+  #screen-task .reward-hint {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-top: 4px;
+  }
+
+  /* Task color themes */
+  .task-theme-0 { --tc: var(--task0); }
+  .task-theme-1 { --tc: var(--task1); }
+  .task-theme-2 { --tc: var(--task2); }
+
+  .task-theme-0 .title,
+  .task-theme-1 .title,
+  .task-theme-2 .title { color: var(--tc); }
+
+  .task-theme-0 .card,
+  .task-theme-1 .card,
+  .task-theme-2 .card {
+    border-color: var(--tc);
+    box-shadow: 0 0 30px rgba(0,0,0,0.3), inset 0 0 40px rgba(255,255,255,0.02);
+  }
+
+  .task-theme-0 .badge { background: var(--task0); color: var(--deep); }
+  .task-theme-1 .badge { background: var(--task1); color: var(--deep); }
+  .task-theme-2 .badge { background: var(--task2); color: var(--deep); }
+
+  /* ─── ALREADY CLAIMED ────────────────────────────────── */
+  #screen-claimed .title { color: var(--gold); }
+  #screen-claimed .card {
+    border-color: var(--gold2);
+    box-shadow: 0 0 20px rgba(245,200,66,0.15);
+  }
+  #screen-claimed .task-body {
+    font-size: clamp(1.1rem, 4vw, 1.25rem);
+    font-weight: 900;
+    line-height: 1.4;
+  }
+
+  /* ─── FULL SCREEN ────────────────────────────────────── */
+  #screen-full .title { color: var(--red); }
+
+  /* ─── FIREWORKS ──────────────────────────────────────── */
+  #fireworks {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    overflow: hidden;
+  }
+  .spark {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    animation: explode var(--dur, 1s) ease-out forwards;
+    transform-origin: center;
+  }
+  @keyframes explode {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+  }
+
+  /* ─── PULSE RING ─────────────────────────────────────── */
+  .pulse-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    border: 3px solid var(--gold);
+    position: absolute;
+    animation: pulseRing 1.5s ease-out infinite;
+    opacity: 0;
+  }
+  @keyframes pulseRing {
+    0%   { transform: scale(0.8); opacity: 0.8; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+
+  /* ─── STAMP ANIMATION ────────────────────────────────── */
+  .stamp-in {
+    animation: stampIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  @keyframes stampIn {
+    from { transform: scale(2.5) rotate(-8deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg);    opacity: 1; }
+  }
+
+  /* ─── QR ID BADGE ────────────────────────────────────── */
+  .qr-id {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    opacity: 0.3;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div id="fireworks"></div>
+
+<div id="app">
+
+  <!-- LOADING -->
+  <div id="screen-loading" class="screen active">
+    <div class="spinner"></div>
+    <p>COMPROBANDO...</p>
+  </div>
+
+  <!-- FAKE CODE -->
+  <div id="screen-fake" class="screen">
+    <div class="cloud emoji-big">💨</div>
+    <div class="title">¡Aquí nada!</div>
+    <div class="card">
+      <p class="subtitle">Este código está vacío.<br>¡Sigue buscando, valiente explorador!</p>
+    </div>
+  </div>
+
+  <!-- NEW TASK WON -->
+  <div id="screen-task" class="screen">
+    <div class="emoji-big stamp-in" id="task-emoji">🎉</div>
+    <div class="title" id="task-title">¡MISIÓN!</div>
+    <div class="card">
+      <div class="badge" id="task-badge">MISIÓN 1</div>
+      <div class="task-body" id="task-body">Texto de la misión aquí</div>
+      <div class="reward-hint" id="task-reward">✨ Completa la misión para ganar puntos</div>
+    </div>
+    <p class="qr-id" id="task-qr-id"></p>
+  </div>
+
+  <!-- ALREADY CLAIMED (this device already has this task) -->
+  <div id="screen-claimed" class="screen">
+    <div class="emoji-big">⭐</div>
+    <div class="title">¡TU MISIÓN!</div>
+    <div class="card">
+      <p class="subtitle" style="opacity:0.6; margin-bottom:8px;">Ya tienes esta tarea:</p>
+      <div class="task-body" id="claimed-body">Texto de la misión aquí</div>
+    </div>
+    <p class="subtitle" style="color:var(--gold)">¡Ve a completarla!</p>
+  </div>
+
+  <!-- ALL TASKS TAKEN -->
+  <div id="screen-full" class="screen">
+    <div class="emoji-big">😭</div>
+    <div class="title">¡LLEGASTE TARDE!</div>
+    <div class="card">
+      <p class="subtitle">Otros grupos ya cogieron todas las tareas de este punto.<br><br>¡Corre al siguiente!</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ⚙️  CONFIGURACIÓN — Edita esto antes del evento
+// ═══════════════════════════════════════════════════════
+
+// 🔥 FIREBASE — Reemplaza con tus credenciales reales
+const FIREBASE_CONFIG = {
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_PROJECT.firebaseapp.com",
+  databaseURL:       "https://TU_PROJECT-default-rtdb.firebaseio.com",
+  projectId:         "TU_PROJECT",
+  storageBucket:     "TU_PROJECT.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
+};
+
+// 🗝️  IDs de los QR válidos (los 9 códigos reales)
+const VALID_IDS = ["q1","q2","q3","q4","q5","q6","q7","q8","q9"];
+
+// 🎯 Las 3 misiones (cada QR las reparte en orden)
+// Personaliza textos, emojis y recompensas
+const MISSIONS = [
+  {
+    label:   "MISIÓN 1",
+    emoji:   "🤜",
+    title:   "¡PRIMER ATAQUE!",
+    body:    "Encuentra al monitor Juan y choca los cinco con toda tu pandilla.",
+    reward:  "🏅 +10 puntos para tu equipo",
+    theme:   0
+  },
+  {
+    label:   "MISIÓN 2",
+    emoji:   "🎵",
+    title:   "¡CORO ÉPICO!",
+    body:    "¡Todo el grupo junto cantad la canción del campamento a pleno pulmón!",
+    reward:  "🏅 +10 puntos para tu equipo",
+    theme:   1
+  },
+  {
+    label:   "MISIÓN 3",
+    emoji:   "📸",
+    title:   "¡FOTO MISIÓN!",
+    body:    "Haceos una foto en pirámide humana y enseñásela al monitor más cercano.",
+    reward:  "🏅 +10 puntos para tu equipo",
+    theme:   2
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+//  🔧  LÓGICA PRINCIPAL — No hace falta cambiar nada
+// ═══════════════════════════════════════════════════════
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name) || "";
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Fireworks ──────────────────────────────────────────
+function launchFireworks() {
+  const fw = document.getElementById('fireworks');
+  const colors = ['#f5c842','#ff6b9d','#4ecdc4','#a78bfa','#ff9f1c','#ffffff'];
+  const cx = window.innerWidth  / 2;
+  const cy = window.innerHeight / 2;
+
+  for (let burst = 0; burst < 5; burst++) {
+    setTimeout(() => {
+      const bx = cx + (Math.random()-0.5)*300;
+      const by = cy + (Math.random()-0.5)*250;
+      for (let i = 0; i < 22; i++) {
+        const s = document.createElement('div');
+        s.className = 'spark';
+        const angle = (i / 22) * Math.PI * 2;
+        const dist  = 80 + Math.random() * 120;
+        s.style.cssText = `
+          left:${bx}px; top:${by}px;
+          background:${colors[Math.floor(Math.random()*colors.length)]};
+          --tx:${Math.cos(angle)*dist}px;
+          --ty:${Math.sin(angle)*dist}px;
+          --dur:${0.6 + Math.random()*0.6}s;
+        `;
+        fw.appendChild(s);
+        s.addEventListener('animationend', () => s.remove());
+      }
+    }, burst * 220);
+  }
+}
+
+// ── Render task ────────────────────────────────────────
+function renderTask(mission, qrId) {
+  const screen = document.getElementById('screen-task');
+  screen.className = `screen task-theme-${mission.theme}`;
+
+  document.getElementById('task-emoji').textContent  = mission.emoji;
+  document.getElementById('task-title').textContent  = mission.title;
+  document.getElementById('task-badge').textContent  = mission.label;
+  document.getElementById('task-body').textContent   = mission.body;
+  document.getElementById('task-reward').textContent = mission.reward;
+  document.getElementById('task-qr-id').textContent  = `código: ${qrId}`;
+
+  showScreen('screen-task');
+  launchFireworks();
+}
+
+// ── Main logic ─────────────────────────────────────────
+async function run() {
+  const qrId = getParam('id').toLowerCase();
+
+  // 1. ¿Código falso?
+  if (!VALID_IDS.includes(qrId)) {
+    showScreen('screen-fake');
+    return;
+  }
+
+  // 2. ¿Este dispositivo ya reclamó algo para este QR?
+  const lsKey    = `camp_claimed_${qrId}`;
+  const existing = localStorage.getItem(lsKey);
+
+  if (existing !== null) {
+    const idx     = parseInt(existing, 10);
+    const mission = MISSIONS[idx];
+    document.getElementById('claimed-body').textContent = mission.body;
+    showScreen('screen-claimed');
+    return;
+  }
+
+  // 3. Consultar Firebase (transacción atómica)
+  const ref = db.ref(`qrcodes/${qrId}/scanCount`);
+
+  try {
+    const result = await ref.transaction(currentCount => {
+      const count = currentCount || 0;
+      if (count >= MISSIONS.length) return count; // no cambiar, ya lleno
+      return count + 1;
+    });
+
+    const newCount = result.snapshot.val();
+
+    // Si ya estaba lleno antes de nuestra transacción
+    if (newCount > MISSIONS.length) {
+      showScreen('screen-full');
+      return;
+    }
+
+    // El índice de misión que me toca (0-based)
+    const missionIndex = newCount - 1;
+
+    if (missionIndex >= MISSIONS.length) {
+      showScreen('screen-full');
+      return;
+    }
+
+    // ¡Misión ganada! Guardar en LocalStorage
+    localStorage.setItem(lsKey, String(missionIndex));
+    renderTask(MISSIONS[missionIndex], qrId);
+
+  } catch (err) {
+    console.error("Firebase error:", err);
+    // Fallback sin Firebase (modo offline)
+    document.getElementById('screen-loading').querySelector('p').textContent =
+      "⚠️ Sin conexión — inténtalo de nuevo";
+  }
+}
+
+run();
+</script>
+</body>
+</html>
