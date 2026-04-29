@@ -414,7 +414,7 @@ function renderTask(mission, qrId) {
 // ── Main logic ─────────────────────────────────────────
 async function run() {
   const qrId = getParam('id').toLowerCase();
-
+  
   // 1. ¿Código falso?
   if (!VALID_IDS.includes(qrId)) {
     showScreen('screen-fake');
@@ -460,25 +460,6 @@ async function run() {
       // 交易被中止 (committed 为 false)，说明前面已经有 3 个人抢走了
       showScreen('screen-full');
     }
-
-  } catch (err) {
-    console.error("Firebase error:", err);
-    // Fallback sin Firebase (modo offline)
-    document.getElementById('screen-loading').querySelector('p').textContent =
-      "⚠️ Sin conexión — inténtalo de nuevo";
-  }
-
-    // El índice de misión que me toca (0-based)
-    const missionIndex = newCount - 1;
-
-    if (missionIndex >= MISSIONS.length) {
-      showScreen('screen-full');
-      return;
-    }
-
-    // ¡Misión ganada! Guardar en LocalStorage
-    localStorage.setItem(lsKey, String(missionIndex));
-    renderTask(MISSIONS[missionIndex], qrId);
 
   } catch (err) {
     console.error("Firebase error:", err);
