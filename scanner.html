@@ -305,7 +305,11 @@
 //  ⚙️  CONFIGURACIÓN — Edita esto antes del evento
 // ═══════════════════════════════════════════════════════
 
-// 🔥 FIREBASE — Reemplaza con tus credenciales reales
+// ═══════════════════════════════════════════════════════
+//  ⚙️  CONFIGURACIÓN — Edita esto antes del evento
+// ═══════════════════════════════════════════════════════
+
+// 🔥 FIREBASE — Tu base de datos emocionregalo
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyAlX2WQpUWO7D_0v2P0WYb-ieBddccqqyw",
   authDomain: "emocionregalo.firebaseapp.com",
@@ -317,40 +321,61 @@ const FIREBASE_CONFIG = {
   measurementId: "G-N8699NPM1N"
 };
 
-// 🗝️  IDs de los QR válidos (los 9 códigos reales)
-const VALID_IDS = ["q1","q2","q3","q4","q5","q6","q7","q8","q9"];
+// 🎯 POOL DE MISIONES (任务池：9个二维码，每个二维码专属3个任务)
+// Aquí defines qué misiones salen en q1, q2, q3...
+const MISSION_POOL = {
+  "felicidad": [
+    { label: "MISIÓN 1 任务1", emoji: "🤜", title: "¡ATAQUE Q1!", body: "Misión 1 exclusiva del código Q1.", theme: 0 },
+    { label: "MISIÓN 2 任务2", emoji: "🎵", title: "¡CORO Q1!",   body: "Misión 2 exclusiv", theme: 1 },
+    { label: "MISIÓN 3 任务3", emoji: "📸", title: "¡FOTO Q1!",   body: "Misión 3 exclusiva del código Q1.", theme: 2 }
+  ],
+  "tristeza": [
+    { label: "MISIÓN 1 任务 1", emoji: "🏃", title: "¡CORRE Q2!",  body: "Misión 1 exclusiva del código Q2.", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "🌳", title: "¡ÁRBOL Q2!",  body: "Misión 2 exclusiva del código Q2.", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "💧", title: "¡AGUA Q2!",   body: "Misión 3 exclusiva del código Q2.", theme: 2 }
+  ],
+  "furia": [
+    { label: "MISIÓN 1 任务 1", emoji: "⭐", title: "¡RETO Q3!", body: "Primera misión de Q3", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "⭐", title: "¡RETO Q3!", body: "Segunda misión de Q3", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "⭐", title: "¡RETO Q3!", body: "Tercera misión de Q3", theme: 2 }
+  ],
+  "anxiedad": [
+    { label: "MISIÓN 1 任务 1", emoji: "⭐", title: "¡RETO Q3!", body: "Primera misión de Q3", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "⭐", title: "¡RETO Q3!", body: "Segunda misión de Q3", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "⭐", title: "¡RETO Q3!", body: "Tercera misión de Q3", theme: 2 }
+  ],
+  "aburrimiento": [
+    { label: "MISIÓN 1 任务 1", emoji: "⭐", title: "¡RETO Q3!", body: "Primera misión de Q3", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "⭐", title: "¡RETO Q3!", body: "Segunda misión de Q3", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "⭐", title: "¡RETO Q3!", body: "Tercera misión de Q3", theme: 2 }
+  ],
+  "envidia": [
+    { label: "MISIÓN 1 任务 1", emoji: "⭐", title: "¡RETO Q3!", body: "Primera misión de Q3", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "⭐", title: "¡RETO Q3!", body: "Segunda misión de Q3", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "⭐", title: "¡RETO Q3!", body: "Tercera misión de Q3", theme: 2 }
+  ],
+  "miedo": [
+    { label: "MISIÓN 1 任务 1", emoji: "⭐", title: "¡RETO Q3!", body: "Primera misión de Q3", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "⭐", title: "¡RETO Q3!", body: "Segunda misión de Q3", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "⭐", title: "¡RETO Q3!", body: "Tercera misión de Q3", theme: 2 }
+  ],
+  "disgusto": [
+    { label: "MISIÓN 1 任务 1", emoji: "⭐", title: "¡RETO Q3!", body: "Primera misión de Q3", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "⭐", title: "¡RETO Q3!", body: "Segunda misión de Q3", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "⭐", title: "¡RETO Q3!", body: "Tercera misión de Q3", theme: 2 }
+  ],
+  "timidez": [
+    { label: "MISIÓN 1 任务 1", emoji: "⭐", title: "¡RETO Q3!", body: "Primera misión de Q3", theme: 0 },
+    { label: "MISIÓN 2 任务 2", emoji: "⭐", title: "¡RETO Q3!", body: "Segunda misión de Q3", theme: 1 },
+    { label: "MISIÓN 3 任务 3", emoji: "⭐", title: "¡RETO Q3!", body: "Tercera misión de Q3", theme: 2 }
+  ]
 
-// 🎯 Las 3 misiones (cada QR las reparte en orden)
-// Personaliza textos, emojis y recompensas
-const MISSIONS = [
-  {
-    label:   "MISIÓN 1",
-    emoji:   "🤜",
-    title:   "¡PRIMER ATAQUE!",
-    body:    "Encuentra al monitor Juan y choca los cinco con toda tu pandilla.",
-    reward:  "🏅 +10 puntos para tu equipo",
-    theme:   0
-  },
-  {
-    label:   "MISIÓN 2",
-    emoji:   "🎵",
-    title:   "¡CORO ÉPICO!",
-    body:    "¡Todo el grupo junto cantad la canción del campamento a pleno pulmón!",
-    reward:  "🏅 +10 puntos para tu equipo",
-    theme:   1
-  },
-  {
-    label:   "MISIÓN 3",
-    emoji:   "📸",
-    title:   "¡FOTO MISIÓN!",
-    body:    "Haceos una foto en pirámide humana y enseñásela al monitor más cercano.",
-    reward:  "🏅 +10 puntos para tu equipo",
-    theme:   2
-  }
-];
+  // 💡 【重要提示】：你可以照着上面的格式，继续往下添加 "q4", "q5" 一直到 "q9"。
+  // 如果你还没想好后面的任务，只要不扫 q4~q9 就不会报错。
+};
 
 // ═══════════════════════════════════════════════════════
-//  🔧  LÓGICA PRINCIPAL — No hace falta cambiar nada
+//  🔧  LÓGICA PRINCIPAL — No hace falta cambiar nada abajo
 // ═══════════════════════════════════════════════════════
 
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -414,12 +439,15 @@ function renderTask(mission, qrId) {
 // ── Main logic ─────────────────────────────────────────
 async function run() {
   const qrId = getParam('id').toLowerCase();
-  
-  // 1. ¿Código falso?
-  if (!VALID_IDS.includes(qrId)) {
+
+  // 1. ¿Código falso? (Si el qrId no existe en nuestro MISSION_POOL)
+  if (!MISSION_POOL[qrId]) {
     showScreen('screen-fake');
     return;
   }
+
+  // Obtenemos las 3 misiones exclusivas para este código
+  const currentMissions = MISSION_POOL[qrId];
 
   // 2. ¿Este dispositivo ya reclamó algo para este QR?
   const lsKey    = `camp_claimed_${qrId}`;
@@ -427,43 +455,37 @@ async function run() {
 
   if (existing !== null) {
     const idx     = parseInt(existing, 10);
-    const mission = MISSIONS[idx];
+    const mission = currentMissions[idx];
     document.getElementById('claimed-body').textContent = mission.body;
     showScreen('screen-claimed');
     return;
   }
 
-// 3. Consultar Firebase (transacción atómica)
+  // 3. Consultar Firebase (transacción atómica)
   const ref = db.ref(`qrcodes/${qrId}/scanCount`);
 
   try {
     const result = await ref.transaction(currentCount => {
       const count = currentCount || 0;
-      // 如果名额已经满了 (>= 3)，返回 undefined 告诉 Firebase "中止这次交易"
-      if (count >= MISSIONS.length) {
+      // Si ya llegamos al límite de misiones de ESTE código (por ejemplo, 3)
+      if (count >= currentMissions.length) {
         return; 
       }
-      // 否则，抢占一个名额
       return count + 1;
     });
 
-    // 判断交易是否成功提交 (committed)
     if (result.committed) {
-      // 交易成功，说明我们抢到了！
       const newCount = result.snapshot.val();
-      const missionIndex = newCount - 1; // 0, 1, 2
+      const missionIndex = newCount - 1; // 0, 1 o 2
       
-      // 保存到 LocalStorage，防止刷新丢失
       localStorage.setItem(lsKey, String(missionIndex));
-      renderTask(MISSIONS[missionIndex], qrId);
+      renderTask(currentMissions[missionIndex], qrId);
     } else {
-      // 交易被中止 (committed 为 false)，说明前面已经有 3 个人抢走了
       showScreen('screen-full');
     }
 
   } catch (err) {
     console.error("Firebase error:", err);
-    // Fallback sin Firebase (modo offline)
     document.getElementById('screen-loading').querySelector('p').textContent =
       "⚠️ Sin conexión — inténtalo de nuevo";
   }
