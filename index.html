@@ -34,14 +34,14 @@
 
   /* Pins */
   .pin { position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;user-select:none;-webkit-tap-highlight-color:transparent; }
-  .pin-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:white;transition:transform .15s;border:2px solid rgba(255,255,255,.2); }
+  .pin-circle { width:55px;height:55px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:30px;color:white;transition:transform .15s;border:2px solid rgba(255,255,255,.2); }
   .pin.disponible .pin-circle { background:var(--green);box-shadow:0 0 0 6px rgba(34,197,94,.2);animation:pg 2.5s infinite; }
   .pin.ocupado   .pin-circle { background:var(--red);  box-shadow:0 0 0 6px rgba(239,68,68,.2); }
   @keyframes pg { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)} 70%{box-shadow:0 0 0 10px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
-  .pin-label { font-size:9px;font-weight:500;background:rgba(0,0,0,.8);color:white;padding:2px 5px;border-radius:3px;white-space:nowrap;max-width:80px;text-align:center;line-height:1.3; }
-  .pin-team  { font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;white-space:nowrap;display:none; }
-  .history-dots { display:flex;gap:2px;flex-wrap:wrap;max-width:80px;justify-content:center; }
-  .hdot { width:7px;height:7px;border-radius:50%;opacity:.85; }
+  .pin-label { display: none; }
+  .pin-team  { display: none !important; }
+  .history-dots { display:flex;gap:5px;flex-wrap:wrap;max-width:80px;justify-content:center; }
+  .hdot { width:12px;height:12px;border-radius:50%;opacity:.85; }
   body.is-admin .pin { cursor:pointer; }
   body.is-admin .pin:active .pin-circle { transform:scale(.88); }
 
@@ -184,16 +184,35 @@ const TEAMS = [
   { id:"g6", name:"Grupo 6", color:"#fbbf24" },
 ];
 
+/* ── EQUIPOS ── 
+const TEAMS = [
+  { id:"g1", name:"Grupo 1", color:"#a78bfa" },
+  { id:"g2", name:"Grupo 2", color:"#38bdf8" },
+  { id:"g3", name:"Grupo 3", color:"#fb923c" },
+  { id:"g4", name:"Grupo 4", color:"#f472b6" },
+  { id:"g5", name:"Grupo 5", color:"#34d399" },
+  { id:"g6", name:"Grupo 6", color:"#fbbf24" },
+  { id:"g7", name:"Grupo 7", color:"#ef4444" },
+  { id:"g8", name:"Grupo 8", color:"#22c55e" },
+  { id:"g9", name:"Grupo 9", color:"#8b5cf6" },
+  { id:"g10", name:"Grupo 10", color:"#ec4899" },
+  { id:"g11", name:"Grupo 11", color:"#14b8a6" },
+  { id:"g12", name:"Grupo 12", color:"#f97316" },
+  { id:"g13", name:"Grupo 13", color:"#6366f1" },
+  { id:"g14", name:"Grupo 14", color:"#84cc16" },
+  { id:"g15", name:"Grupo 15", color:"#eab308" }
+];*/
+
 /* ── ESTACIONES ── ajusta left/top % según tu mapa ── */
 const STATIONS = [
-  { label:"ATLETISMO",    num:"1", left:"3.7%",  top:"50.6%" },
-  { label:"FUTBOL AMERICANO(PICHI)",     num:"2", left:"21.2%", top:"77.8%" },
-  { label:"PARTIDO DE BASKET(CAO)",    num:"3", left:"20.7%", top:"5.6%" },
-  { label:"SILENCIO",     num:"4", left:"34.7%", top:"24.8%" },
-  { label:"FUERZA BRUTA", num:"5", left:"47.2%", top:"54%" },
-  { label:"S. Juan",    num:"6", left:"47.2%", top:"63.7%" },
-  { label:"ATRAPA LA BANDERA(PILLA PILLA)", num:"7", left:"72.3%", top:"17.7%" },
-  { label:"BOLOS HUMANOS", num:"7", left:"32.4%", top:"84.9%" },
+  { id:"atletismo", label:"ATLETISMO",                  num:"1", left:"3.7%",  top:"50.6%" },
+  { id:"pichi",     label:"FUTBOL AMERICANO(PICHI)",    num:"2", left:"21.2%", top:"77.8%" },
+  { id:"basket",    label:"PARTIDO DE BASKET(CAO)",     num:"3", left:"20.7%", top:"5.6%" },
+  { id:"silencio",  label:"SILENCIO",                   num:"4", left:"34.7%", top:"24.8%" },
+  { id:"fuerza",    label:"FUERZA BRUTA",               num:"5", left:"47.2%", top:"54%" },
+  { id:"s_juan",    label:"S. Juan",                    num:"6", left:"47.2%", top:"63.7%" },
+  { id:"bandera",   label:"ATRAPA LA BANDERA",          num:"7", left:"72.3%", top:"17.7%" },
+  { id:"bolos",     label:"BOLOS HUMANOS",              num:"8", left:"32.4%", top:"84.9%" }
 ];
 
 /* ── INIT ── */
