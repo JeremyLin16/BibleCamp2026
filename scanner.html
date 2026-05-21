@@ -83,7 +83,7 @@
   /* ─── TYPOGRAPHY ────────────────────────────────────── */
   .title {
     font-family: 'Bangers', cursive;
-    font-size: clamp(2.4rem, 8vw, 3.6rem);
+    font-size: clamp(1.5rem, 2vw, 3rem);
     letter-spacing: 3px;
     line-height: 1;
     text-shadow: 3px 3px 0 rgba(0,0,0,0.4);
@@ -280,8 +280,7 @@
 
   <!-- ALREADY CLAIMED (this device already has this task) -->
   <div id="screen-claimed" class="screen">
-    <div class="emoji-big">⭐</div>
-    <div class="title">¡TU MISIÓN!</div>
+    <div class="title">恭喜你成功找到任务 Congrats for find the task</div>
     <div class="card">
       <p class="subtitle" style="opacity:0.6; margin-bottom:8px;">Ya tienes esta tarea:</p>
       <div class="task-body" id="claimed-body">Texto de la misión aquí</div>
@@ -325,9 +324,17 @@ const FIREBASE_CONFIG = {
 // Aquí defines qué misiones salen en q1, q2, q3...
 const MISSION_POOL = {
   "felicidad": [
-    { label: "MISIÓN 1 任务1", emoji: "🤜", title: "¡ATAQUE Q1!", body: "Misión 1 exclusiva del código Q1.", theme: 0 },
-    { label: "MISIÓN 2 任务2", emoji: "🎵", title: "¡CORO Q1!",   body: "Misión 2 exclusiv", theme: 1 },
-    { label: "MISIÓN 3 任务3", emoji: "📸", title: "¡FOTO Q1!",   body: "Misión 3 exclusiva del código Q1.", theme: 2 }
+    { label: "MISIÓN 1 任务1", 
+      title: "感恩的气球 Los globos de la gratitud", 
+      body: "你们要去找到:                    \n" + "El NPC tira 3 o 4 globos al grupo al mismo tiempo. El equipo tiene que mantenerlos en el aire durante 2 minutos seguidos. La regla principal es que cuando alguien golpea un globo, debe gritar muy fuerte algo por lo que esté agradecido. (Familia, Comida, Amigos, Campamento etc)",
+      theme: 0 
+    },
+
+    { label: "MISIÓN 2 任务2",
+      title: "跳舞拍视频",
+      body: "https://www.tiktok.com/@ash_bond1/video/7546556809142619400?q=goodbye%20yesterday&t=1778190377306 各组要拍一个剪短的视频跳goodbye yesterday的小舞蹈（请查看链接）", 
+      theme: 1 
+    }
   ],
   "tristeza": [
     { label: "MISIÓN 1 任务 1", emoji: "🏃", title: "¡CORRE Q2!",  body: "Misión 1 exclusiva del código Q2.", theme: 0 },
