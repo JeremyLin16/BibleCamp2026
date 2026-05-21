@@ -326,7 +326,7 @@ const MISSION_POOL = {
   "felicidad": [
     { label: "MISIÓN 1 任务1", 
       title: "感恩的气球 Los globos de la gratitud", 
-      body: "你们要去找到:                    \n" + "El NPC tira 3 o 4 globos al grupo al mismo tiempo. El equipo tiene que mantenerlos en el aire durante 2 minutos seguidos. La regla principal es que cuando alguien golpea un globo, debe gritar muy fuerte algo por lo que esté agradecido. (Familia, Comida, Amigos, Campamento etc)",
+      body: "你们要去找到:  <b> HONGZHOU</b> <br><br> El NPC tira 3 o 4 globos al grupo al mismo tiempo. El equipo tiene que mantenerlos en el aire durante 2 minutos seguidos. La regla main es que cuando alguien golpea un globo, debe gritar muy fuerte algo por lo que esté agradecido. (Familia, Comida, Amigos, Campamento etc)",
       theme: 0 
     },
 
@@ -432,12 +432,12 @@ function renderTask(mission, qrId) {
   const screen = document.getElementById('screen-task');
   screen.className = `screen task-theme-${mission.theme}`;
 
-  document.getElementById('task-emoji').textContent  = mission.emoji;
-  document.getElementById('task-title').textContent  = mission.title;
-  document.getElementById('task-badge').textContent  = mission.label;
-  document.getElementById('task-body').textContent   = mission.body;
-  document.getElementById('task-reward').textContent = mission.reward;
-  document.getElementById('task-qr-id').textContent  = `código: ${qrId}`;
+  document.getElementById('task-emoji').innerHTML  = mission.emoji;
+  document.getElementById('task-title').innerHTML  = mission.title;
+  document.getElementById('task-badge').innerHTML  = mission.label;
+  document.getElementById('task-body').innerHTML   = mission.body;
+  document.getElementById('task-reward').innerHTML = mission.reward;
+  document.getElementById('task-qr-id').innerHTML  = `código: ${qrId}`;
 
   showScreen('screen-task');
   launchFireworks();
@@ -463,7 +463,7 @@ async function run() {
   if (existing !== null) {
     const idx     = parseInt(existing, 10);
     const mission = currentMissions[idx];
-    document.getElementById('claimed-body').textContent = mission.body;
+    document.getElementById('claimed-body').innerHTML = mission.body;
     showScreen('screen-claimed');
     return;
   }
@@ -493,7 +493,7 @@ async function run() {
 
   } catch (err) {
     console.error("Firebase error:", err);
-    document.getElementById('screen-loading').querySelector('p').textContent =
+    document.getElementById('screen-loading').querySelector('p').innerHTML =
       "⚠️ Sin conexión — inténtalo de nuevo";
   }
 }
