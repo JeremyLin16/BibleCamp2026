@@ -524,7 +524,18 @@ async function run() {
   if (existing !== null) {
     const idx     = parseInt(existing, 10);
     const mission = currentMissions[idx];
-    document.getElementById('claimed-body').innerHTML = mission.body;
+    document.getElementById('claimed-body').innerHTML = `
+      <div style="font-family: 'Bangers', cursive; color: var(--gold); letter-spacing: 2px; font-size: 1.1rem; margin-bottom: 4px;">
+        ${mission.label}
+      </div>
+      <div style="font-size: 1.3rem; font-weight: 900; margin-bottom: 12px;">
+        ${mission.title}
+      </div>
+      <div style="border-top: 1px dashed rgba(255,255,255,0.3); padding-top: 12px; margin-top: 12px;">
+        ${mission.body}
+      </div>
+    `;
+    
     showScreen('screen-claimed');
     return;
   }
