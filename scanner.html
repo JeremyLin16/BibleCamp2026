@@ -3,43 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Búsqueda del Tesoro</title>
+<title>Misiones del Campamento</title>
 
-<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
   /* ─── VARIABLES ─────────────────────────────────────── */
   :root {
-    --forest:   #1a3a2a;
-    --deep:     #0d2218;
-    --gold:     #f5c842;
-    --gold2:    #e8a000;
-    --red:      #e84040;
-    --mist:     #8baaa0;
-    --white:    #f0ede6;
-    --task0:    #4ecdc4;
-    --task1:    #ff6b9d;
-    --task2:    #a78bfa;
+    --deep:   #0d2218;
+    --forest: #1a3a2a;
+    --gold:   #f5c842;
+    --gold2:  #e8a000;
+    --mist:   #8baaa0;
+    --white:  #f0ede6;
+    --task0:  #4ecdc4;
+    --task1:  #ff6b9d;
+    --task2:  #a78bfa;
   }
 
   /* ─── RESET & BASE ──────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html, body {
-    height: 100%;
+  html { height: 100%; }
+  body {
+    min-height: 100%;
     background: var(--deep);
     font-family: 'Nunito', sans-serif;
     color: var(--white);
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
-  /* ─── ANIMATED BACKGROUND ───────────────────────────── */
+  /* ─── ANIMATED BACKGROUND (fixed so it covers even when scrolling) ── */
   body::before {
     content: '';
     position: fixed; inset: 0;
@@ -51,22 +46,23 @@
     pointer-events: none;
   }
 
-  /* ─── SCREEN CONTAINER ──────────────────────────────── */
+  /* ─── APP CONTAINER ─────────────────────────────────── */
   #app {
     position: relative;
     z-index: 1;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 28px 20px 40px;
   }
 
+  /* ─── SCREENS ────────────────────────────────────────── */
   .screen {
     display: none;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     text-align: center;
     max-width: 400px;
     width: 100%;
@@ -76,88 +72,80 @@
   .screen.active { display: flex; }
 
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(30px); }
+    from { opacity: 0; transform: translateY(28px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* ─── TYPOGRAPHY ────────────────────────────────────── */
+  /* ─── TYPOGRAPHY ─────────────────────────────────────── */
   .title {
     font-family: 'Bangers', cursive;
-    font-size: clamp(1.5rem, 2vw, 3rem);
+    font-size: clamp(1.6rem, 6vw, 2.4rem);
     letter-spacing: 3px;
-    line-height: 1;
+    line-height: 1.1;
     text-shadow: 3px 3px 0 rgba(0,0,0,0.4);
   }
   .subtitle {
-    font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+    font-size: clamp(0.9rem, 3.5vw, 1.05rem);
     font-weight: 700;
     opacity: 0.85;
-    line-height: 1.4;
+    line-height: 1.5;
   }
 
-  /* ─── CARDS ─────────────────────────────────────────── */
+  /* ─── CARD ───────────────────────────────────────────── */
   .card {
     background: rgba(255,255,255,0.06);
     border: 2px solid rgba(255,255,255,0.12);
     border-radius: 20px;
-    padding: 24px 28px;
+    padding: 22px 26px;
     width: 100%;
     backdrop-filter: blur(8px);
   }
 
-  /* ─── EMOJI BIG ──────────────────────────────────────── */
+  /* ─── EMOJI ──────────────────────────────────────────── */
   .emoji-big {
-    font-size: clamp(4rem, 18vw, 6rem);
+    font-size: clamp(3.5rem, 16vw, 5.5rem);
     line-height: 1;
     filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
   }
 
-  /* ─── LOADING SCREEN ─────────────────────────────────── */
-  #screen-loading .spinner {
-    width: 56px; height: 56px;
-    border: 5px solid rgba(245,200,66,0.2);
-    border-top-color: var(--gold);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  #screen-loading p { color: var(--mist); font-weight: 700; letter-spacing: 1px; }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
   /* ─── FAKE SCREEN ────────────────────────────────────── */
-  #screen-fake .title { color: var(--mist); }
   #screen-fake .cloud {
     font-size: 5rem;
     animation: float 3s ease-in-out infinite;
   }
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-12px); }
+    0%,100% { transform: translateY(0);     }
+    50%      { transform: translateY(-12px); }
   }
 
   /* ─── TASK SCREEN ────────────────────────────────────── */
-  #screen-task .badge {
+  .badge {
     font-family: 'Bangers', cursive;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     letter-spacing: 3px;
-    padding: 6px 16px;
+    padding: 5px 14px;
     border-radius: 50px;
     display: inline-block;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
-  #screen-task .task-body {
-    font-size: clamp(1.15rem, 4.5vw, 1.35rem);
-    font-weight: 900;
-    line-height: 1.4;
-    margin-top: 8px;
+  .task-body {
+    font-size: clamp(1.05rem, 4vw, 1.25rem);
+    font-weight: 700;
+    line-height: 1.5;
+    margin-top: 6px;
   }
-  #screen-task .reward-hint {
-    font-size: 0.9rem;
-    opacity: 0.7;
+  .task-body a { color: var(--gold); }
+
+  .qr-id {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    opacity: 0.25;
+    text-transform: uppercase;
     margin-top: 4px;
   }
 
-  /* Task color themes */
+  /* ─── TASK COLOUR THEMES ─────────────────────────────── */
   .task-theme-0 { --tc: var(--task0); }
   .task-theme-1 { --tc: var(--task1); }
   .task-theme-2 { --tc: var(--task2); }
@@ -170,27 +158,81 @@
   .task-theme-1 .card,
   .task-theme-2 .card {
     border-color: var(--tc);
-    box-shadow: 0 0 30px rgba(0,0,0,0.3), inset 0 0 40px rgba(255,255,255,0.02);
+    box-shadow: 0 0 32px rgba(0,0,0,0.3), inset 0 0 40px rgba(255,255,255,0.02);
   }
 
   .task-theme-0 .badge { background: var(--task0); color: var(--deep); }
   .task-theme-1 .badge { background: var(--task1); color: var(--deep); }
   .task-theme-2 .badge { background: var(--task2); color: var(--deep); }
 
-  /* ─── ALREADY CLAIMED ────────────────────────────────── */
-  #screen-claimed .title { color: var(--gold); }
-  #screen-claimed .card {
-    border-color: var(--gold2);
-    box-shadow: 0 0 20px rgba(245,200,66,0.15);
+  /* ─── MAP WIDGET ─────────────────────────────────────── */
+  /*
+   * The map wrapper bleeds to the card edges and sits at the bottom.
+   * card padding is 22px top/bottom, 26px left/right
+   * → bleed: margin 0 -26px -22px, width calc(100% + 52px)
+   */
+  .map-wrapper {
+    position: relative;
+    width: calc(100% + 52px);
+    margin: 16px -26px -22px;
+    height: 220px;
+    overflow: hidden;
+    border-radius: 0 0 18px 18px;
+    background: #0a1a10;
+    touch-action: none;    /* we handle touch ourselves */
+    cursor: grab;
+    flex-shrink: 0;
   }
-  #screen-claimed .task-body {
-    font-size: clamp(1.1rem, 4vw, 1.25rem);
-    font-weight: 900;
-    line-height: 1.4;
+  .map-wrapper:active { cursor: grabbing; }
+
+  .map-wrapper img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+    transform-origin: 0 0;   /* pinch-zoom JS uses top-left origin */
+    will-change: transform;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;    /* touches go to wrapper, not image */
+    transition: none;
   }
 
-  /* ─── FULL SCREEN ────────────────────────────────────── */
-  #screen-full .title { color: var(--red); }
+  .map-divider {
+    border: none;
+    border-top: 1px dashed rgba(255,255,255,0.15);
+    margin: 14px 0 10px;
+  }
+  .map-label {
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .map-hint {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.65);
+    color: rgba(255,255,255,0.75);
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    pointer-events: none;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    animation: hintFade 2s ease 1.5s forwards;
+    opacity: 1;
+  }
+  @keyframes hintFade {
+    to { opacity: 0; }
+  }
 
   /* ─── FIREWORKS ──────────────────────────────────────── */
   #fireworks {
@@ -203,45 +245,20 @@
     position: absolute;
     width: 8px; height: 8px;
     border-radius: 50%;
-    animation: explode var(--dur, 1s) ease-out forwards;
-    transform-origin: center;
+    animation: explode var(--dur,1s) ease-out forwards;
   }
   @keyframes explode {
     0%   { transform: translate(0,0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-  }
-
-  /* ─── PULSE RING ─────────────────────────────────────── */
-  .pulse-ring {
-    width: 100px; height: 100px;
-    border-radius: 50%;
-    border: 3px solid var(--gold);
-    position: absolute;
-    animation: pulseRing 1.5s ease-out infinite;
-    opacity: 0;
-  }
-  @keyframes pulseRing {
-    0%   { transform: scale(0.8); opacity: 0.8; }
-    100% { transform: scale(2.2); opacity: 0; }
+    100% { transform: translate(var(--tx),var(--ty)) scale(0); opacity: 0; }
   }
 
   /* ─── STAMP ANIMATION ────────────────────────────────── */
   .stamp-in {
-    animation: stampIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: stampIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
   }
   @keyframes stampIn {
     from { transform: scale(2.5) rotate(-8deg); opacity: 0; }
-    to   { transform: scale(1) rotate(0deg);    opacity: 1; }
-  }
-
-  /* ─── QR ID BADGE ────────────────────────────────────── */
-  .qr-id {
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    opacity: 0.3;
-    text-transform: uppercase;
-    margin-top: 8px;
+    to   { transform: scale(1)   rotate(0deg);  opacity: 1; }
   }
 </style>
 </head>
@@ -251,203 +268,255 @@
 
 <div id="app">
 
-  <!-- LOADING -->
-  <div id="screen-loading" class="screen active">
-    <div class="spinner"></div>
-    <p>COMPROBANDO...</p>
-  </div>
-
-  <!-- FAKE CODE -->
+  <!-- ① CÓDIGO FALSO / 假码 -->
   <div id="screen-fake" class="screen">
     <div class="cloud emoji-big">💨</div>
-    <div class="title">¡Aquí nada!</div>
+    <div class="title" style="color:var(--mist)">¡Aquí nada! · 空空如也</div>
     <div class="card">
-      <p class="subtitle">Este código está vacío.<br>¡Sigue buscando, valiente explorador!</p>
+      <p class="subtitle">Este código está vacío.<br>¡Sigue buscando, valiente explorador!<br><br>这个码是空的，继续找下一个吧！</p>
     </div>
   </div>
 
-  <!-- NEW TASK WON -->
+  <!-- ② MISIÓN / 任务 -->
   <div id="screen-task" class="screen">
-    <div class="emoji-big stamp-in" id="task-emoji">🎉</div>
-    <div class="title" id="task-title">¡MISIÓN!</div>
-    <div class="card">
-      <div class="badge" id="task-badge">MISIÓN 1</div>
-      <div class="task-body" id="task-body">Texto de la misión aquí</div>
-      <div class="reward-hint" id="task-reward">✨ Completa la misión para ganar puntos</div>
+    <div class="emoji-big stamp-in" id="task-emoji">🎯</div>
+    <div class="title" id="task-title"></div>
+    <div class="card" id="task-card">
+      <div class="badge" id="task-badge"></div>
+      <div class="task-body" id="task-body"></div>
+
+      <!-- MAP — hidden by default, shown if mission.map is set -->
+      <div id="map-section" style="display:none">
+        <hr class="map-divider">
+        <p class="map-label">📍 Ubicación · 位置</p>
+        <div class="map-wrapper" id="map-wrapper">
+          <img id="mission-map" src="" alt="Mapa del lugar">
+          <div class="map-hint">👆 Pellizca para ampliar · 双指缩放</div>
+        </div>
+      </div>
     </div>
     <p class="qr-id" id="task-qr-id"></p>
   </div>
 
-  <!-- ALREADY CLAIMED (this device already has this task) -->
-  <div id="screen-claimed" class="screen">
-    <div class="title">恭喜你成功找到任务 Congrats for find the task</div>
-    <div class="card">
-      <p class="subtitle" style="opacity:0.6; margin-bottom:8px;">Ya tienes esta tarea:</p>
-      <div class="task-body" id="claimed-body">Texto de la misión aquí</div>
-    </div>
-    <p class="subtitle" style="color:var(--gold)">¡Ve a completarla!</p>
-  </div>
-
-  <!-- ALL TASKS TAKEN -->
-  <div id="screen-full" class="screen">
-    <div class="emoji-big">😭</div>
-    <div class="title">¡LLEGASTE TARDE!</div>
-    <div class="card">
-      <p class="subtitle">Otros grupos ya cogieron todas las tareas de este punto.<br><br>¡Corre al siguiente!</p>
-    </div>
-  </div>
-
-</div>
+</div><!-- #app -->
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  ⚙️  CONFIGURACIÓN — Edita esto antes del evento
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+//  ⚙️  MISSION POOL
+//  • Emociones (con monitor): cada clave = nombre de la emoción (lowercase)
+//  • Tareas sin monitor:      claves tarea_sin_monitor1 … tarea_sin_monitor9
+//
+//  Propiedades por misión:
+//    label   → texto del badge
+//    emoji   → icono grande
+//    title   → título de pantalla
+//    body    → instrucción (puede contener HTML)
+//    map     → nombre del archivo de imagen en la misma carpeta, o null
+//    theme   → 0 (cian) | 1 (rosa) | 2 (violeta)
+// ═══════════════════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════
-//  ⚙️  CONFIGURACIÓN — Edita esto antes del evento
-// ═══════════════════════════════════════════════════════
-
-// 🔥 FIREBASE — Tu base de datos emocionregalo
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAlX2WQpUWO7D_0v2P0WYb-ieBddccqqyw",
-  authDomain: "emocionregalo.firebaseapp.com",
-  databaseURL: "https://emocionregalo-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "emocionregalo",
-  storageBucket: "emocionregalo.firebasestorage.app",
-  messagingSenderId: "65772915120",
-  appId: "1:65772915120:web:6ab71bc176d0d1b23b2e75",
-  measurementId: "G-N8699NPM1N"
-};
-
-// 🎯 POOL DE MISIONES (任务池：9个二维码，每个二维码专属3个任务)
-// Aquí defines qué misiones salen en q1, q2, q3...
 const MISSION_POOL = {
-  "felicidad": [
-    { label: "MISIÓN 1 任务1", 
-      title: "感恩的气球 Los globos de la gratitud", 
-      body: "你们要去找到:  <b> 永哥 & 张馨艺 Noa </b> <br><br>",
-      theme: 0 
-    },
 
-    { label: "MISIÓN 2 任务2",
-      title: "拍视频 Grabación de baile",
-      body: "各组要拍一个剪短的视频跳goodbye yesterday的小舞蹈，然后拍下来发到辅导群里 Los grupos deben grabar un pequeño video bailando la coreografía de 'goodbye yesterday' y luego enviarlo al grupo de WeChat<video src='video_goodbye_yesterday.mp4' controls playsinline width='100%' style='border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);'></video>", 
-      theme: 1 
-    }
-  ],
-  "tristeza": [
-    { label: "MISIÓN 1 任务1", 
-      title: "蒙眼的做迷藏 Escondite a ciegas", 
-      body: "你们要去找到:  <b> 周洁 & Marina </b> <br><br>",
-      theme: 0 
-    },
+  // ──────────────────────────────────────────────────────────
+  // 🧭 MISIONES CON MONITOR (情绪关卡, QR en el juego)
+  // Cada emoción tiene 1 misión fija + su mapa de ubicación
+  // ──────────────────────────────────────────────────────────
 
-    { label: "MISIÓN 2 任务2",
-      title: "拍视频 Grabación de baile",
-      body: "各组要拍一个剪短的视频跳washed的小舞蹈，然后拍下来发到辅导群里 Los grupos deben grabar un pequeño video bailando la coreografía de 'washed' y luego enviarlo al grupo de WeChat<video src='video_washed.mp4' controls playsinline width='100%' style='border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);'></video>", 
-      theme: 1 
-    }
-  ],
-  "furia": [
-    { label: "MISIÓN 1 任务1", 
-      title: "漏洞的杯子 Los vasos con agujeros", 
-      body: "你们要去找到:  <b> 林一安 </b> <br><br>",
-      theme: 0 
-    },
+  "felicidad": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "🎈",
+    title: "感恩的气球 · Los globos de la gratitud",
+    body:  "你们要去找到：<b>永哥 &amp; 张馨艺 Noa</b>",
+    map:   "MAPA_alegria.png",   // ← pon aquí el nombre exacto de tu imagen
+    theme: 0
+  },
 
-    { label: "MISIÓN 2 任务2",
-      title: "背经句 Recitar versículo",
-      body: "各组要背诵约翰福音3:16，然后拍下来发到辅导群里 Los grupos deben recitar Juan 3:16 y luego grabarlo y enviarlo al grupo de WeChat", 
-      theme: 1 
-    }
-  ],
-  "anxiedad": [
-    { label: "MISIÓN 1 任务1", 
-      title: "反转吧毯子 La manta invertida", 
-      body: "你们要去找到:  <b> 张淑婷 & Rosa 怡乐 </b> <br><br>",
-      theme: 0 
-    },
+  "tristeza": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "🙈",
+    title: "蒙眼的做迷藏 · Escondite a ciegas",
+    body:  "你们要去找到：<b>周洁 &amp; Marina</b>",
+    map:   "MAPA_tristeza.png",
+    theme: 0
+  },
 
-    { label: "MISIÓN 2 任务2",
-      title: "拍视频 Grabación",
-      body: "各组要拍一个简短的视频 组里每个人需要喊你们的口号，然后拍下来发到辅导群里 Los grupos deben grabar un pequeño video donde cada miembro del grupo diga el lema y luego enviarlo al grupo de WeChat", 
-      theme: 1 
-    }
-  ],
-  "aburrimiento": [
-    { label: "MISIÓN 1 任务1", 
-      title: "耐心的时钟 El Reloj de la Paciencia", 
-      body: "你们要去找到:  <b> 臧璠 / Tsang Fan </b> <br><br>",
-      theme: 0 
-    },
+  "furia": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "💧",
+    title: "漏洞的杯子 · Los vasos con agujeros",
+    body:  "你们要去找到：<b>林一安</b>",
+    map:   "MAPA_furia.png",
+    theme: 0
+  },
 
-    { label: "MISIÓN 2 任务2",
-      title: "Mural/ Poster 绘画海报",
-      body: "需要去到大堂 然后在准备好的桌子写上一件感恩的事 Los grupos deben ir al vestíbulo y escribir en la mesa preparada una cosa por la que estén agradecidos", 
-      theme: 1 
-    }
-  ],
-  "Admiracion": [
-    { label: "MISIÓN 1 任务1", 
-      title: "伴着手吃糖 Los caramelos con las manos atadas", 
-      body: "你们要去找到:  <b> Hongzhou & 叶仰曦 YangXi </b> <br><br>",
-      theme: 0 
-    },
+  "anxiedad": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "🛡️",
+    title: "反转吧毯子 · La manta invertida",
+    body:  "你们要去找到：<b>张淑婷 &amp; Rosa 怡乐</b>",
+    map:   "MAPA_ansiedad.png",
+    theme: 0
+  },
 
-    { label: "MISIÓN 2 任务2",
-      title: "背经句 Recitar versículo",
-      body: "全组需要背诵经文 并用手机拍下来(视频里需要出现所有人) 然后发给辅导群 Los grupos deben recitar un versículo y grabarlo en video (todos los miembros deben aparecer) y luego enviarlo al grupo de WeChat", 
-      theme: 1 
-    }
-  ],
-  "miedo": [
-    { label: "MISIÓN 1 任务1", 
-      title: "神秘宝箱 La caja misteriosa", 
-      body: "你们要去找到:  <b> 徐丹 & 吴炜馨 Wu Weixin </b> <br><br>",
-      theme: 0 
-    },
+  "aburrimiento": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "⏰",
+    title: "耐心的时钟 · El Reloj de la Paciencia",
+    body:  "你们要去找到：<b>臧璠 / Tsang Fan</b>",
+    map:   "MAPA_aburrimiento.png",
+    theme: 0
+  },
 
-    { label: "MISIÓN 2 任务2",
-      title: "跳舞拍视频",
-      body: "https://www.tiktok.com/@ash_bond1/video/7546556809142619400?q=goodbye%20yesterday&t=1778190377306 各组要拍一个剪短的视频跳goodbye yesterday的小舞蹈（请查看链接）", 
-      theme: 1 
-    }
-  ],
-  "disgusto": [
-    { label: "MISIÓN 1 任务1", 
-      title: "杯子和气味 Los vasos y sus olores", 
-      body: "你们要去找到:  <b> 许潆仄 &  Yiran </b> <br><br>",
-      theme: 0 
-    },
+  "admiracion": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "🍬",
+    title: "伴着手吃糖 · Los caramelos con las manos atadas",
+    body:  "你们要去找到：<b>Hongzhou &amp; 叶仰曦 YangXi</b>",
+    map:   "MAPA_envidia.png",
+    theme: 0
+  },
 
-    { label: "MISIÓN 2 任务2",
-      title: "跳舞拍视频",
-      body: "https://www.tiktok.com/@ash_bond1/video/7546556809142619400?q=goodbye%20yesterday&t=1778190377306 各组要拍一个剪短的视频跳goodbye yesterday的小舞蹈（请查看链接）", 
-      theme: 1 
-    }
-  ],
-  "timidez": [
-    { label: "MISIÓN 1 任务1", 
-      title: "有趣的衣服 Vestiduras de Gracia", 
-      body: "你们要去找到:  <b> Ino Chen & 天语 Inés </b> <br><br>",
-      theme: 0 
-    },
+  "miedo": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "🎁",
+    title: "神秘宝箱 · La caja misteriosa",
+    body:  "你们要去找到：<b>徐丹 &amp; 吴炜馨 Wu Weixin</b>",
+    map:   "MAPA_miedo.png",
+    theme: 0
+  },
 
-    { label: "MISIÓN 2 任务2",
-      title: "跳舞拍视频",
-      body: "https://www.tiktok.com/@ash_bond1/video/7546556809142619400?q=goodbye%20yesterday&t=1778190377306 各组要拍一个剪短的视频跳goodbye yesterday的小舞蹈（请查看链接）", 
-      theme: 1 
-    }
-  ]
+  "disgusto": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "👃",
+    title: "杯子和气味 · Los vasos y sus olores",
+    body:  "你们要去找到：<b>许潆仄 &amp; Yiran</b>",
+    map:   "MAPA_asco.png",
+    theme: 0
+  },
+
+  "timidez": {
+    label: "MISIÓN 1 · 任务1",
+    emoji: "👗",
+    title: "有趣的衣服 · Vestiduras de Gracia",
+    body:  "你们要去找到：<b>Ino Chen &amp; 天语 Inés</b>",
+    map:   "MAPA_vergüenza.png",
+    theme: 0
+  },
+
+
+  // ──────────────────────────────────────────────────────────
+  // 🎮 TAREAS SIN MONITOR (自由任务, QR independientes)
+  // ──────────────────────────────────────────────────────────
+
+  "tarea_sin_monitor1": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "🎵",
+    title: "拍视频 · Grabación de baile",
+    body:  `各组要拍一个简短的视频跳 <b>Goodbye Yesterday</b> 的小舞蹈，然后发到辅导群里。<br><br>
+            Los grupos deben grabar un pequeño video bailando la coreografía de <b>"Goodbye Yesterday"</b> y luego enviarlo al grupo de WeChat.<br><br>
+            <video src="video_goodbye_yesterday.mp4" controls playsinline width="100%"
+              style="border-radius:12px; margin-top:4px; box-shadow:0 4px 10px rgba(0,0,0,0.4);"></video>`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor2": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "🎵",
+    title: "拍视频 · Grabación de baile",
+    body:  `各组要拍一个简短的视频跳 <b>Washed</b> 的小舞蹈，然后发到辅导群里。<br><br>
+            Los grupos deben grabar un pequeño video bailando la coreografía de <b>"Washed"</b> y luego enviarlo al grupo de WeChat.<br><br>
+            <video src="video_washed.mp4" controls playsinline width="100%"
+              style="border-radius:12px; margin-top:4px; box-shadow:0 4px 10px rgba(0,0,0,0.4);"></video>`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor3": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "📖",
+    title: "背经句 · Recitar versículo",
+    body:  `各组要背诵 <b>约翰福音 3:16</b>，然后拍下来发到辅导群里。<br><br>
+            Los grupos deben recitar <b>Juan 3:16</b>, grabarlo en video y enviarlo al grupo de WeChat.`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor4": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "📣",
+    title: "拍视频 · Grabación del lema",
+    body:  `各组要拍一个简短的视频，组里每个人需要喊你们的口号，然后发到辅导群里。<br><br>
+            Los grupos deben grabar un video donde cada miembro del grupo diga el lema y luego enviarlo al grupo de WeChat.`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor5": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "🎨",
+    title: "Mural / Poster · 绘画海报",
+    body:  `需要去到大堂，然后在准备好的桌子写上一件感恩的事。<br><br>
+            Los grupos deben ir al vestíbulo y escribir en la mesa preparada una cosa por la que estén agradecidos.`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor6": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "📖",
+    title: "背经句 · Recitar versículo",
+    body:  `全组需要背诵经文，并用手机拍下来（视频里需要出现所有人），然后发给辅导群。<br><br>
+            Los grupos deben recitar un versículo y grabarlo en video (todos los miembros deben aparecer) y luego enviarlo al grupo de WeChat.`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor7": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "🕺",
+    title: "跳舞拍视频 · Baile en video",
+    body:  `各组要拍一个简短的视频跳 <b>Goodbye Yesterday</b> 的小舞蹈（请查看链接）。<br><br>
+            <a href="https://www.tiktok.com/@ash_bond1/video/7546556809142619400"
+               target="_blank" style="color:var(--gold); font-weight:700; font-size:1.1rem;">
+              👉 Ver coreografía en TikTok
+            </a>`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor8": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "🕺",
+    title: "跳舞拍视频 · Baile en video",
+    body:  `各组要拍一个简短的视频跳 <b>Goodbye Yesterday</b> 的小舞蹈（请查看链接）。<br><br>
+            <a href="https://www.tiktok.com/@ash_bond1/video/7546556809142619400"
+               target="_blank" style="color:var(--gold); font-weight:700; font-size:1.1rem;">
+              👉 Ver coreografía en TikTok
+            </a>`,
+    map:   null,
+    theme: 1
+  },
+
+  "tarea_sin_monitor9": {
+    label: "TAREA LIBRE · 自由任务",
+    emoji: "🕺",
+    title: "跳舞拍视频 · Baile en video",
+    body:  `各组要拍一个简短的视频跳 <b>Goodbye Yesterday</b> 的小舞蹈（请查看链接）。<br><br>
+            <a href="https://www.tiktok.com/@ash_bond1/video/7546556809142619400"
+               target="_blank" style="color:var(--gold); font-weight:700; font-size:1.1rem;">
+              👉 Ver coreografía en TikTok
+            </a>`,
+    map:   null,
+    theme: 1
+  }
+
 };
 
-// ═══════════════════════════════════════════════════════
-//  🔧  LÓGICA PRINCIPAL — No hace falta cambiar nada abajo
-// ═══════════════════════════════════════════════════════
 
-firebase.initializeApp(FIREBASE_CONFIG);
-const db = firebase.database();
+// ═══════════════════════════════════════════════════════════════════════
+//  🔧  LÓGICA — no hace falta cambiar nada de aquí para abajo
+// ═══════════════════════════════════════════════════════════════════════
 
 function getParam(name) {
   return new URLSearchParams(window.location.search).get(name) || "";
@@ -458,28 +527,28 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
-// ── Fireworks ──────────────────────────────────────────
+// ── Fireworks ────────────────────────────────────────────────────────
 function launchFireworks() {
-  const fw = document.getElementById('fireworks');
+  const fw     = document.getElementById('fireworks');
   const colors = ['#f5c842','#ff6b9d','#4ecdc4','#a78bfa','#ff9f1c','#ffffff'];
-  const cx = window.innerWidth  / 2;
-  const cy = window.innerHeight / 2;
+  const cx     = window.innerWidth  / 2;
+  const cy     = window.innerHeight / 3;
 
   for (let burst = 0; burst < 5; burst++) {
     setTimeout(() => {
-      const bx = cx + (Math.random()-0.5)*300;
-      const by = cy + (Math.random()-0.5)*250;
+      const bx = cx + (Math.random() - 0.5) * 300;
+      const by = cy + (Math.random() - 0.5) * 200;
       for (let i = 0; i < 22; i++) {
-        const s = document.createElement('div');
+        const s     = document.createElement('div');
         s.className = 'spark';
         const angle = (i / 22) * Math.PI * 2;
         const dist  = 80 + Math.random() * 120;
         s.style.cssText = `
           left:${bx}px; top:${by}px;
-          background:${colors[Math.floor(Math.random()*colors.length)]};
-          --tx:${Math.cos(angle)*dist}px;
-          --ty:${Math.sin(angle)*dist}px;
-          --dur:${0.6 + Math.random()*0.6}s;
+          background:${colors[Math.floor(Math.random() * colors.length)]};
+          --tx:${Math.cos(angle) * dist}px;
+          --ty:${Math.sin(angle) * dist}px;
+          --dur:${0.6 + Math.random() * 0.6}s;
         `;
         fw.appendChild(s);
         s.addEventListener('animationend', () => s.remove());
@@ -488,87 +557,154 @@ function launchFireworks() {
   }
 }
 
-// ── Render task ────────────────────────────────────────
+// ── Pinch-to-zoom for the map ────────────────────────────────────────
+function initPinchZoom(wrapper, img) {
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 6;
+
+  let scale = 1, tx = 0, ty = 0;
+  let mode  = null;  // 'pan' | 'pinch'
+
+  // pan state
+  let startTx = 0, startTy = 0, pointerStartX = 0, pointerStartY = 0;
+  // pinch state
+  let startDist = 0, startScale = 0;
+  let startMidX = 0, startMidY = 0;
+  let pinchStartTx = 0, pinchStartTy = 0;
+
+  // double-tap to reset
+  let lastTapTime = 0;
+
+  function applyTransform() {
+    img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  }
+
+  function clamp(s, x, y) {
+    const wW = wrapper.clientWidth;
+    const wH = wrapper.clientHeight;
+    const iW = img.naturalWidth  || img.clientWidth;
+    const iH = img.naturalHeight || img.clientHeight;
+    const scaledW = iW * s;
+    const scaledH = iH * s;
+    return {
+      x: scaledW <= wW ? (wW - scaledW) / 2 : Math.min(0, Math.max(wW - scaledW, x)),
+      y: scaledH <= wH ? (wH - scaledH) / 2 : Math.min(0, Math.max(wH - scaledH, y))
+    };
+  }
+
+  wrapper.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      // check double-tap
+      const now = Date.now();
+      if (now - lastTapTime < 280) {
+        scale = 1; tx = 0; ty = 0;
+        applyTransform();
+        lastTapTime = 0;
+        return;
+      }
+      lastTapTime = now;
+
+      mode          = 'pan';
+      pointerStartX = e.touches[0].clientX;
+      pointerStartY = e.touches[0].clientY;
+      startTx       = tx;
+      startTy       = ty;
+
+    } else if (e.touches.length === 2) {
+      mode = 'pinch';
+      const dx    = e.touches[1].clientX - e.touches[0].clientX;
+      const dy    = e.touches[1].clientY - e.touches[0].clientY;
+      startDist   = Math.hypot(dx, dy);
+      startScale  = scale;
+      const rect  = wrapper.getBoundingClientRect();
+      startMidX   = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+      startMidY   = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+      pinchStartTx = tx;
+      pinchStartTy = ty;
+    }
+  }, { passive: false });
+
+  wrapper.addEventListener('touchmove', e => {
+    e.preventDefault();
+
+    if (mode === 'pan' && e.touches.length === 1) {
+      const dx = e.touches[0].clientX - pointerStartX;
+      const dy = e.touches[0].clientY - pointerStartY;
+      const c  = clamp(scale, startTx + dx, startTy + dy);
+      tx = c.x; ty = c.y;
+      applyTransform();
+
+    } else if (mode === 'pinch' && e.touches.length >= 2) {
+      const dx      = e.touches[1].clientX - e.touches[0].clientX;
+      const dy      = e.touches[1].clientY - e.touches[0].clientY;
+      const dist    = Math.hypot(dx, dy);
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, startScale * (dist / startDist)));
+
+      // Keep pinch mid-point fixed
+      const newTx = startMidX - (startMidX - pinchStartTx) * (newScale / startScale);
+      const newTy = startMidY - (startMidY - pinchStartTy) * (newScale / startScale);
+      const c     = clamp(newScale, newTx, newTy);
+
+      scale = newScale; tx = c.x; ty = c.y;
+      applyTransform();
+    }
+  }, { passive: false });
+
+  wrapper.addEventListener('touchend', e => {
+    if (e.touches.length === 0)      { mode = null; }
+    else if (e.touches.length === 1) {
+      mode          = 'pan';
+      pointerStartX = e.touches[0].clientX;
+      pointerStartY = e.touches[0].clientY;
+      startTx       = tx;
+      startTy       = ty;
+    }
+  });
+}
+
+// ── Render task ──────────────────────────────────────────────────────
 function renderTask(mission, qrId) {
   const screen = document.getElementById('screen-task');
   screen.className = `screen task-theme-${mission.theme}`;
 
-  document.getElementById('task-emoji').innerHTML  = mission.emoji;
-  document.getElementById('task-title').innerHTML  = mission.title;
-  document.getElementById('task-badge').innerHTML  = mission.label;
-  document.getElementById('task-body').innerHTML   = mission.body;
-  document.getElementById('task-reward').innerHTML = mission.reward;
-  document.getElementById('task-qr-id').innerHTML  = `código: ${qrId}`;
+  document.getElementById('task-emoji').textContent = mission.emoji || '🎯';
+  document.getElementById('task-title').innerHTML   = mission.title;
+  document.getElementById('task-badge').textContent = mission.label;
+  document.getElementById('task-body').innerHTML    = mission.body;
+  document.getElementById('task-qr-id').textContent = `código · ${qrId}`;
+
+  // Map
+  const mapSection = document.getElementById('map-section');
+  const mapWrapper = document.getElementById('map-wrapper');
+  const mapImg     = document.getElementById('mission-map');
+
+  if (mission.map) {
+    mapImg.src = mission.map;
+    mapSection.style.display = 'block';
+    // Init zoom after image loads (so we know natural dimensions)
+    mapImg.onload = () => initPinchZoom(mapWrapper, mapImg);
+    // Also init now in case image is already cached
+    if (mapImg.complete && mapImg.naturalWidth) initPinchZoom(mapWrapper, mapImg);
+  } else {
+    mapSection.style.display = 'none';
+  }
 
   showScreen('screen-task');
   launchFireworks();
 }
 
-// ── Main logic ─────────────────────────────────────────
-async function run() {
-  const qrId = getParam('id').toLowerCase();
+// ── Entry point ──────────────────────────────────────────────────────
+function run() {
+  const qrId   = getParam('id').toLowerCase();
+  const mission = MISSION_POOL[qrId];
 
-  // 1. ¿Código falso? (Si el qrId no existe en nuestro MISSION_POOL)
-  if (!MISSION_POOL[qrId]) {
+  if (!mission) {
     showScreen('screen-fake');
     return;
   }
 
-  // Obtenemos las 3 misiones exclusivas para este código
-  const currentMissions = MISSION_POOL[qrId];
-
-  // 2. ¿Este dispositivo ya reclamó algo para este QR?
-  const lsKey    = `camp_claimed_${qrId}`;
-  const existing = localStorage.getItem(lsKey);
-
-  if (existing !== null) {
-    const idx     = parseInt(existing, 10);
-    const mission = currentMissions[idx];
-    document.getElementById('claimed-body').innerHTML = `
-      <div style="font-family: 'Bangers', cursive; color: var(--gold); letter-spacing: 2px; font-size: 1.1rem; margin-bottom: 4px;">
-        ${mission.label}
-      </div>
-      <div style="font-size: 1.3rem; font-weight: 900; margin-bottom: 12px;">
-        ${mission.title}
-      </div>
-      <div style="border-top: 1px dashed rgba(255,255,255,0.3); padding-top: 12px; margin-top: 12px;">
-        ${mission.body}
-      </div>
-    `;
-    
-    showScreen('screen-claimed');
-    return;
-  }
-
-  // 3. Consultar Firebase (transacción atómica)
-  const ref = db.ref(`qrcodes/${qrId}/scanCount`);
-
-  try {
-    const result = await ref.transaction(currentCount => {
-      const count = currentCount || 0;
-      /* Si ya llegamos al límite de misiones de ESTE código (por ejemplo, 3)
-      if (count >= currentMissions.length) {
-        return; 
-      }*/
-      return count + 1;
-    });
-
-    if (result.committed) {
-      const newCount = result.snapshot.val();
-      //const missionIndex = newCount - 1; // 0, 1 o 2
-      const missionIndex = (newCount - 1) % currentMissions.length;
-      
-      localStorage.setItem(lsKey, String(missionIndex));
-      renderTask(currentMissions[missionIndex], qrId);
-    } else {
-      showScreen('screen-full');
-    }
-
-  } catch (err) {
-    console.error("Firebase error:", err);
-    document.getElementById('screen-loading').querySelector('p').innerHTML =
-      "⚠️ Sin conexión — inténtalo de nuevo";
-  }
+  renderTask(mission, qrId);
 }
 
 run();
