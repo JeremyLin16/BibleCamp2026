@@ -38,17 +38,35 @@
   .pin.disponible .pin-circle { background:var(--green);box-shadow:0 0 0 6px rgba(34,197,94,.2);animation:pg 2.5s infinite; }
   .pin.ocupado   .pin-circle { background:var(--red);  box-shadow:0 0 0 6px rgba(239,68,68,.2); }
   @keyframes pg { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)} 70%{box-shadow:0 0 0 10px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
-  .pin-label { display: none; }
-  .pin-team  { display: none !important; }
+  .pin-label { display:none; }
+  .pin-team  { display:none !important; }
   .history-dots { display:flex;gap:5px;flex-wrap:wrap;max-width:80px;justify-content:center; }
   .hdot { width:12px;height:12px;border-radius:50%;opacity:.85; }
   body.is-admin .pin { cursor:pointer; }
   body.is-admin .pin:active .pin-circle { transform:scale(.88); }
 
-  /* Sheet */
+  /* Sheet ── FIX 2: max-height + scroll para que quepa todo con 14 grupos */
   #sheet-bg { position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:30;display:none;align-items:flex-end; }
   #sheet-bg.open { display:flex; }
-  #sheet { background:#161b27;border-radius:18px 18px 0 0;border:.5px solid var(--border);width:100%;padding:18px 16px 32px; }
+  #sheet {
+    background:#161b27;border-radius:18px 18px 0 0;border:.5px solid var(--border);
+    width:100%;
+    /* FIX 2: limitar altura y permitir scroll interno */
+    max-height: 82dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Cabecera fija del sheet (handle + título + botones estado) */
+  #sheet-header {
+    padding: 18px 16px 0;
+    flex-shrink: 0;
+  }
+  /* Cuerpo scrollable (grupos + cerrar) */
+  #sheet-body {
+    overflow-y: auto;
+    padding: 0 16px 32px;
+    -webkit-overflow-scrolling: touch;
+  }
   #sheet-handle { width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 16px; }
   #sheet-title { font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px; }
   #sheet-sub   { font-size:12px;color:var(--muted);margin-bottom:16px; }
@@ -64,40 +82,15 @@
 
   /* Teams grid */
   #teams-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px; }
-  .team-btn {
-    padding:10px;border-radius:10px;border:.5px solid var(--border);
-    background:var(--surface);color:var(--text);
-    font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;
-    cursor:pointer;display:flex;align-items:center;gap:8px;
-    transition:all .15s;text-align:left;position:relative;
-  }
+  .team-btn { padding:10px;border-radius:10px;border:.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;text-align:left;position:relative; }
   .team-btn:hover { background:rgba(255,255,255,.1); }
-  /* Selected (playing now) */
   .team-btn.selected { border-width:1.5px; }
-  /* Was here before (history, but NOT currently playing) */
-  .team-btn.visited { opacity:.5; }
-  /* Cancel badge */
-  .team-btn .cancel-x {
-    margin-left:auto;font-size:14px;line-height:1;
-    color:rgba(255,255,255,.4);display:none;
-  }
-  .team-btn.selected .cancel-x,
-  .team-btn.visited  .cancel-x { display:block; }
+  .team-btn.visited  { opacity:.5; }
+  .team-btn .cancel-x { margin-left:auto;font-size:14px;line-height:1;color:rgba(255,255,255,.4);display:none; }
+  .team-btn.selected .cancel-x, .team-btn.visited .cancel-x { display:block; }
   .team-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
 
   #cancel-btn { width:100%;padding:8px;border-radius:10px;border:none;background:transparent;color:rgba(255,255,255,.3);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer; }
-
-  /* Scoreboard */
-  #scoreboard { background:rgba(10,12,18,.95);border-top:1px solid var(--border);padding:10px 16px;flex-shrink:0; }
-  #scoreboard h3 { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px; }
-  #score-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:6px; }
-  .score-card { background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 8px;display:flex;align-items:center;gap:6px; }
-  .sc-dot  { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
-  .sc-info { flex:1;min-width:0; }
-  .sc-name  { font-size:10px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-  .sc-count { font-size:9px;color:var(--muted); }
-  .sc-bar-wrap { height:2px;background:rgba(255,255,255,.06);border-radius:1px;margin-top:3px;overflow:hidden; }
-  .sc-bar { height:100%;border-radius:1px;transition:width .4s ease; }
 
   #admin-bar { display:none;padding:8px 16px;background:rgba(239,68,68,.08);border-top:1px solid rgba(239,68,68,.18);font-size:11px;color:#fca5a5;text-align:center;flex-shrink:0; }
   body.is-admin #admin-bar { display:block; }
@@ -108,6 +101,7 @@
   #loading { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(15,17,23,.85);z-index:50;flex-direction:column;gap:12px; }
   .spinner { width:30px;height:30px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
+  #loading-msg { font-size:13px;color:var(--muted);text-align:center;line-height:1.6; }
 </style>
 </head>
 <body>
@@ -125,7 +119,10 @@
   <div id="map-canvas">
     <div id="map-bg"></div>
   </div>
-  <div id="loading"><div class="spinner"></div><span style="font-size:13px;color:var(--muted)">Conectando...</span></div>
+  <div id="loading">
+    <div class="spinner"></div>
+    <span id="loading-msg">Conectando...</span>
+  </div>
   <div id="zoom-btns">
     <button class="zoom-btn" id="btn-zoom-in">+</button>
     <button class="zoom-btn" id="btn-zoom-out">−</button>
@@ -133,31 +130,27 @@
 
   <div id="sheet-bg">
     <div id="sheet">
-      <div id="sheet-handle"></div>
-      <div id="sheet-title">Estación</div>
-      <div id="sheet-sub">Gestiona el estado y los grupos</div>
-
-      <!-- Disponible / Ocupado toggle -->
-      <div id="status-row">
-        <button class="status-btn" id="btn-disponible" onclick="setStatus('disponible')">🟢 Disponible</button>
-        <button class="status-btn" id="btn-ocupado"    onclick="setStatus('ocupado')">🔴 Ocupado</button>
+      <!-- FIX 2: cabecera fija siempre visible -->
+      <div id="sheet-header">
+        <div id="sheet-handle"></div>
+        <div id="sheet-title">Estación</div>
+        <div id="sheet-sub">Gestiona el estado y los grupos</div>
+        <div id="status-row">
+          <button class="status-btn" id="btn-disponible" onclick="setStatus('disponible')">🟢 Disponible</button>
+          <button class="status-btn" id="btn-ocupado"    onclick="setStatus('ocupado')">🔴 Ocupado</button>
+        </div>
       </div>
-
-      <!-- Groups -->
-      <div class="section-label">Grupos — toca para añadir o cancelar</div>
-      <div id="teams-grid"></div>
-
-      <button id="cancel-btn" onclick="closeSheet()">Cerrar</button>
+      <!-- FIX 2: grupos en zona scrollable -->
+      <div id="sheet-body">
+        <div class="section-label">Grupos — toca para añadir o cancelar</div>
+        <div id="teams-grid"></div>
+        <button id="cancel-btn" onclick="closeSheet()">Cerrar</button>
+      </div>
     </div>
   </div>
 </div>
 
-/*
-<div id="scoreboard">
-  <h3>🏆 Juegos completados por grupo</h3>
-  <div id="score-grid"></div>
-</div>
-*/
+<!-- FIX extra: scoreboard eliminado correctamente (estaba con /* */ que NO es HTML válido) -->
 
 <div id="admin-bar">✏️ Toca un pin para gestionar el estado</div>
 <div id="toast"></div>
@@ -166,65 +159,42 @@
 import { initializeApp }                       from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-/* ── FIREBASE CONFIG ── reemplaza con los tuyos ── */
-  const firebaseConfig = {
-    apiKey: "AIzaSyDTgu6wU8fx89RSCRUE2PQ_J5i2oYKwz7M",
-    authDomain: "mapajuegos.firebaseapp.com",
-    databaseURL: "https://mapajuegos-default-rtdb.europe-west1.firebasedatabase.app/",
-    projectId: "mapajuegos",
-    storageBucket: "mapajuegos.firebasestorage.app",
-    messagingSenderId: "998173054463",
-    appId: "1:998173054463:web:a3c6b1795af7628f6303ca",
-    measurementId: "G-T903CERQZ3"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDTgu6wU8fx89RSCRUE2PQ_J5i2oYKwz7M",
+  authDomain: "mapajuegos.firebaseapp.com",
+  databaseURL: "https://mapajuegos-default-rtdb.europe-west1.firebasedatabase.app",  // FIX 1: quitada la / del final
+  projectId: "mapajuegos",
+  storageBucket: "mapajuegos.firebasestorage.app",
+  messagingSenderId: "998173054463",
+  appId: "1:998173054463:web:a3c6b1795af7628f6303ca"
+};
 
-/* ── EQUIPOS ── */
 const TEAMS = [
-  { id:"g1", name:"Grupo 1", color:"#a78bfa" },  /* 浅紫 */
-  { id:"g2", name:"Grupo 2", color:"#38bdf8" },  /* 亮蓝 */
-  { id:"g3", name:"Grupo 3", color:"#fb923c" },  /* 亮橙 */
-  { id:"g4", name:"Grupo 4", color:"#f472b6" },  /* 粉色 */
-  { id:"g5", name:"Grupo 5", color:"#34d399" },  /* 翠绿 */
-  { id:"g6", name:"Grupo 6", color:"#fbbf24" },  /* 金黄 */
-  { id:"g7", name:"Grupo 7", color:"#ef4444" },  /* 红色 */
-  { id:"g8", name:"Grupo 8", color:"#22c55e" },  /* 正绿 */
-  { id:"g9", name:"Grupo 9", color:"#8b5cf6" },  /* 深紫 */
-  { id:"g10", name:"Grupo 10", color:"#ec4899" }, /* 玫瑰 */
-  { id:"g11", name:"Grupo 11", color:"#14b8a6" }, /* 青色 */
-  { id:"g12", name:"Grupo 12", color:"#f97316" }, /* 深橙 */
-  { id:"g13", name:"Grupo 13", color:"#6366f1" }, /* 靛蓝 */
-  { id:"g14", name:"Grupo 14", color:"#84cc16" }  /* 黄绿 */
-];
-
-/* ── EQUIPOS ── 
-const TEAMS = [
-  { id:"g1", name:"Grupo 1", color:"#a78bfa" },
-  { id:"g2", name:"Grupo 2", color:"#38bdf8" },
-  { id:"g3", name:"Grupo 3", color:"#fb923c" },
-  { id:"g4", name:"Grupo 4", color:"#f472b6" },
-  { id:"g5", name:"Grupo 5", color:"#34d399" },
-  { id:"g6", name:"Grupo 6", color:"#fbbf24" },
-  { id:"g7", name:"Grupo 7", color:"#ef4444" },
-  { id:"g8", name:"Grupo 8", color:"#22c55e" },
-  { id:"g9", name:"Grupo 9", color:"#8b5cf6" },
+  { id:"g1",  name:"Grupo 1",  color:"#a78bfa" },
+  { id:"g2",  name:"Grupo 2",  color:"#38bdf8" },
+  { id:"g3",  name:"Grupo 3",  color:"#fb923c" },
+  { id:"g4",  name:"Grupo 4",  color:"#f472b6" },
+  { id:"g5",  name:"Grupo 5",  color:"#34d399" },
+  { id:"g6",  name:"Grupo 6",  color:"#fbbf24" },
+  { id:"g7",  name:"Grupo 7",  color:"#ef4444" },
+  { id:"g8",  name:"Grupo 8",  color:"#22c55e" },
+  { id:"g9",  name:"Grupo 9",  color:"#8b5cf6" },
   { id:"g10", name:"Grupo 10", color:"#ec4899" },
   { id:"g11", name:"Grupo 11", color:"#14b8a6" },
   { id:"g12", name:"Grupo 12", color:"#f97316" },
   { id:"g13", name:"Grupo 13", color:"#6366f1" },
-  { id:"g14", name:"Grupo 14", color:"#84cc16" },
-  { id:"g15", name:"Grupo 15", color:"#eab308" }
-];*/
+  { id:"g14", name:"Grupo 14", color:"#84cc16" }
+];
 
-/* ── ESTACIONES ── ajusta left/top % según tu mapa ── */
 const STATIONS = [
-  { id:"atletismo", label:"ATLETISMO",                  num:"1", left:"3.7%",  top:"50.6%" },
-  { id:"pichi",     label:"FUTBOL AMERICANO(PICHI)",    num:"2", left:"21.2%", top:"77.8%" },
-  { id:"basket",    label:"PARTIDO DE BASKET(CAO)",     num:"3", left:"20.7%", top:"5.6%" },
-  { id:"silencio",  label:"SILENCIO",                   num:"4", left:"34.7%", top:"24.8%" },
-  { id:"fuerza",    label:"FUERZA BRUTA",               num:"5", left:"47.2%", top:"54%" },
-  { id:"s_juan",    label:"S. Juan",                    num:"6", left:"47.2%", top:"63.7%" },
-  { id:"bandera",   label:"ATRAPA LA BANDERA",          num:"7", left:"72.3%", top:"17.7%" },
-  { id:"bolos",     label:"BOLOS HUMANOS",              num:"8", left:"32.4%", top:"84.9%" }
+  { id:"atletismo", label:"ATLETISMO",               num:"1", left:"3.7%",  top:"50.6%" },
+  { id:"pichi",     label:"FÚTBOL AMERICANO (PICHI)",num:"2", left:"21.2%", top:"77.8%" },
+  { id:"basket",    label:"BASKET (CAO)",            num:"3", left:"20.7%", top:"5.6%"  },
+  { id:"silencio",  label:"SILENCIO",                num:"4", left:"34.7%", top:"24.8%" },
+  { id:"fuerza",    label:"FUERZA BRUTA",            num:"5", left:"47.2%", top:"54%"   },
+  { id:"s_juan",    label:"S. JUAN",                 num:"6", left:"47.2%", top:"63.7%" },
+  { id:"bandera",   label:"ATRAPA LA BANDERA",       num:"7", left:"72.3%", top:"17.7%" },
+  { id:"bolos",     label:"BOLOS HUMANOS",           num:"8", left:"32.4%", top:"84.9%" }
 ];
 
 /* ── INIT ── */
@@ -249,22 +219,19 @@ const mapCanvas  = document.getElementById('map-canvas');
 
 STATIONS.forEach(s => {
   const p = document.createElement('div');
-  p.className   = 'pin disponible';
-  p.id          = 'pin-' + s.id;
-  p.style.left  = s.left;
-  p.style.top   = s.top;
-  p.innerHTML   = `
+  p.className  = 'pin disponible';
+  p.id         = 'pin-' + s.id;
+  p.style.left = s.left;
+  p.style.top  = s.top;
+  p.innerHTML  = `
     <div class="pin-circle">${s.num}</div>
     <div class="pin-label">${s.label}</div>
-    <div class="pin-team"  id="pt-${s.id}"></div>
+    <div class="pin-team" id="pt-${s.id}"></div>
     <div class="history-dots" id="hd-${s.id}"></div>`;
   if (isAdmin) {
-    // On mobile, touchstart on wrapper uses preventDefault() which kills 'click'.
-    // So we detect taps manually: touchstart records position, touchend fires if
-    // finger didn't move more than 10px — that's a tap, not a pan.
     let pinTouchStartX = 0, pinTouchStartY = 0;
     p.addEventListener('touchstart', e => {
-      e.stopPropagation();          // don't let wrapper start panning
+      e.stopPropagation();
       pinTouchStartX = e.touches[0].clientX;
       pinTouchStartY = e.touches[0].clientY;
     }, { passive: true });
@@ -272,16 +239,21 @@ STATIONS.forEach(s => {
       e.stopPropagation();
       const dx = e.changedTouches[0].clientX - pinTouchStartX;
       const dy = e.changedTouches[0].clientY - pinTouchStartY;
-      if (Math.hypot(dx, dy) < 10) {  // it's a tap
-        e.preventDefault();           // prevent ghost click
+      if (Math.hypot(dx, dy) < 10) {
+        e.preventDefault();
         openSheet(s.id);
       }
     });
-    // Desktop fallback
     p.addEventListener('click', e => { if (!wasPanning) openSheet(s.id); });
   }
   mapCanvas.appendChild(p);
 });
+
+/* ── FIX 3: bloquear que los eventos touch del sheet lleguen al mapa ── */
+const sheetBg = document.getElementById('sheet-bg');
+sheetBg.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+sheetBg.addEventListener('touchmove',  e => e.stopPropagation(), { passive: true });
+sheetBg.addEventListener('touchend',   e => e.stopPropagation(), { passive: true });
 
 /* ── PAN & ZOOM ENGINE ── */
 let tx = 0, ty = 0, scale = 1;
@@ -289,21 +261,17 @@ let minScale, fitScale;
 const MAX_SCALE = 4;
 let wasPanning = false;
 
-// Image natural size via a probe Image object
 const probe = new Image();
 probe.src = 'mapa.jpg';
 probe.onload = () => initMap(probe.naturalWidth, probe.naturalHeight);
-// Fallback if already cached
 if (probe.complete && probe.naturalWidth) initMap(probe.naturalWidth, probe.naturalHeight);
 
 function initMap(imgW, imgH) {
   const wW = mapWrapper.clientWidth;
   const wH = mapWrapper.clientHeight;
-  // Scale to fit fully inside wrapper
-  fitScale  = Math.min(wW / imgW, wH / imgH);
-  minScale  = fitScale * 0.9;
-  scale     = fitScale;
-  // Center the map
+  fitScale = Math.min(wW / imgW, wH / imgH);
+  minScale = fitScale * 0.9;
+  scale    = fitScale;
   tx = (wW - imgW * scale) / 2;
   ty = (wH - imgH * scale) / 2;
   mapCanvas.style.width  = imgW + 'px';
@@ -317,146 +285,127 @@ function applyTransform(animated) {
 }
 
 function clampTranslation() {
-  const wW  = mapWrapper.clientWidth;
-  const wH  = mapWrapper.clientHeight;
-  const cW  = parseFloat(mapCanvas.style.width  || 0) * scale;
-  const cH  = parseFloat(mapCanvas.style.height || 0) * scale;
-  const minTx = Math.min(0, wW - cW);
-  const minTy = Math.min(0, wH - cH);
-  const maxTx = cW < wW ? (wW - cW) / 2 : 0;
-  const maxTy = cH < wH ? (wH - cH) / 2 : 0;
-  tx = Math.max(minTx, Math.min(maxTx, tx));
-  ty = Math.max(minTy, Math.min(maxTy, ty));
+  const wW = mapWrapper.clientWidth;
+  const wH = mapWrapper.clientHeight;
+  const cW = parseFloat(mapCanvas.style.width  || 0) * scale;
+  const cH = parseFloat(mapCanvas.style.height || 0) * scale;
+  tx = Math.max(Math.min(0, wW - cW), Math.min(cW < wW ? (wW-cW)/2 : 0, tx));
+  ty = Math.max(Math.min(0, wH - cH), Math.min(cH < wH ? (wH-cH)/2 : 0, ty));
 }
 
-// ── TOUCH EVENTS ──
+/* TOUCH */
 let touch1 = null, touch2 = null;
 let lastMidX = 0, lastMidY = 0, lastDist = 0;
-let touchStartX = 0, touchStartY = 0, touchMoved = false;
+let touchStartX = 0, touchStartY = 0;
 
 mapWrapper.addEventListener('touchstart', e => {
-  if (document.getElementById('sheet-bg').classList.contains('open')) return;
-  touchMoved  = false;
-  wasPanning  = false;
+  if (sheetBg.classList.contains('open')) return;
+  wasPanning = false;
   if (e.touches.length === 1) {
-    touch1      = e.touches[0];
-    touch2      = null;
-    touchStartX = touch1.clientX;
-    touchStartY = touch1.clientY;
-    lastMidX    = touch1.clientX;
-    lastMidY    = touch1.clientY;
+    touch1 = e.touches[0]; touch2 = null;
+    touchStartX = touch1.clientX; touchStartY = touch1.clientY;
+    lastMidX = touch1.clientX; lastMidY = touch1.clientY;
   } else if (e.touches.length === 2) {
-    touch1   = e.touches[0];
-    touch2   = e.touches[1];
-    lastDist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
-    lastMidX = (touch1.clientX + touch2.clientX) / 2;
-    lastMidY = (touch1.clientY + touch2.clientY) / 2;
+    touch1 = e.touches[0]; touch2 = e.touches[1];
+    lastDist = Math.hypot(touch2.clientX-touch1.clientX, touch2.clientY-touch1.clientY);
+    lastMidX = (touch1.clientX+touch2.clientX)/2;
+    lastMidY = (touch1.clientY+touch2.clientY)/2;
   }
   e.preventDefault();
 }, { passive: false });
 
 mapWrapper.addEventListener('touchmove', e => {
-  if (document.getElementById('sheet-bg').classList.contains('open')) return;
+  if (sheetBg.classList.contains('open')) return;
   e.preventDefault();
-
   if (e.touches.length === 1 && !touch2) {
-    const t   = e.touches[0];
-    const dx  = t.clientX - lastMidX;
-    const dy  = t.clientY - lastMidY;
-    if (Math.abs(t.clientX - touchStartX) > 5 || Math.abs(t.clientY - touchStartY) > 5) {
-      touchMoved = true; wasPanning = true;
-    }
-    tx += dx; ty += dy;
+    const t = e.touches[0];
+    if (Math.abs(t.clientX-touchStartX) > 5 || Math.abs(t.clientY-touchStartY) > 5) wasPanning = true;
+    tx += t.clientX - lastMidX; ty += t.clientY - lastMidY;
     lastMidX = t.clientX; lastMidY = t.clientY;
-    clampTranslation();
-    applyTransform(false);
+    clampTranslation(); applyTransform(false);
   } else if (e.touches.length === 2) {
-    touchMoved = true; wasPanning = true;
-    const t1  = e.touches[0], t2 = e.touches[1];
-    const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-    const midX = (t1.clientX + t2.clientX) / 2;
-    const midY = (t1.clientY + t2.clientY) / 2;
+    wasPanning = true;
+    const t1 = e.touches[0], t2 = e.touches[1];
+    const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+    const midX = (t1.clientX+t2.clientX)/2, midY = (t1.clientY+t2.clientY)/2;
     const rect = mapWrapper.getBoundingClientRect();
-    const ratio = dist / lastDist;
-
-    // Zoom toward pinch center
-    const originX = midX - rect.left;
-    const originY = midY - rect.top;
-    const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale * ratio));
-    tx = originX - (originX - tx) * (newScale / scale);
-    ty = originY - (originY - ty) * (newScale / scale);
-    scale  = newScale;
-    lastDist = dist;
-
-    // Also pan
-    tx += midX - lastMidX;
-    ty += midY - lastMidY;
+    const originX = midX-rect.left, originY = midY-rect.top;
+    const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale*(dist/lastDist)));
+    tx = originX-(originX-tx)*(newScale/scale);
+    ty = originY-(originY-ty)*(newScale/scale);
+    scale = newScale; lastDist = dist;
+    tx += midX-lastMidX; ty += midY-lastMidY;
     lastMidX = midX; lastMidY = midY;
-    clampTranslation();
-    applyTransform(false);
+    clampTranslation(); applyTransform(false);
   }
 }, { passive: false });
 
 mapWrapper.addEventListener('touchend', e => {
+  if (sheetBg.classList.contains('open')) return;  // FIX 3: también aquí
   if (e.touches.length < 2) touch2 = null;
   if (e.touches.length === 0) touch1 = null;
   setTimeout(() => { wasPanning = false; }, 50);
 });
 
-// ── MOUSE EVENTS (desktop) ──
+/* MOUSE */
 let mouseDown = false, mouseStartX = 0, mouseStartY = 0;
 mapWrapper.addEventListener('mousedown', e => {
   if (e.target.closest('#sheet-bg, #zoom-btns, #loading')) return;
-  mouseDown  = true; wasPanning = false;
-  mouseStartX = e.clientX - tx;
-  mouseStartY = e.clientY - ty;
+  mouseDown = true; wasPanning = false;
+  mouseStartX = e.clientX - tx; mouseStartY = e.clientY - ty;
 });
 window.addEventListener('mousemove', e => {
   if (!mouseDown) return;
-  tx = e.clientX - mouseStartX;
-  ty = e.clientY - mouseStartY;
-  wasPanning = true;
-  clampTranslation();
-  applyTransform(false);
+  tx = e.clientX - mouseStartX; ty = e.clientY - mouseStartY;
+  wasPanning = true; clampTranslation(); applyTransform(false);
 });
-window.addEventListener('mouseup', () => {
-  mouseDown = false;
-  setTimeout(() => { wasPanning = false; }, 50);
-});
+window.addEventListener('mouseup', () => { mouseDown = false; setTimeout(() => { wasPanning = false; }, 50); });
 mapWrapper.addEventListener('wheel', e => {
   e.preventDefault();
-  const rect   = mapWrapper.getBoundingClientRect();
-  const originX = e.clientX - rect.left;
-  const originY = e.clientY - rect.top;
-  const delta   = e.deltaY > 0 ? 0.85 : 1.18;
-  const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale * delta));
-  tx = originX - (originX - tx) * (newScale / scale);
-  ty = originY - (originY - ty) * (newScale / scale);
-  scale = newScale;
-  clampTranslation();
-  applyTransform(false);
+  const rect = mapWrapper.getBoundingClientRect();
+  const originX = e.clientX-rect.left, originY = e.clientY-rect.top;
+  const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale*(e.deltaY>0?0.85:1.18)));
+  tx = originX-(originX-tx)*(newScale/scale);
+  ty = originY-(originY-ty)*(newScale/scale);
+  scale = newScale; clampTranslation(); applyTransform(false);
 }, { passive: false });
 
-// ── ZOOM BUTTONS ──
-document.getElementById('btn-zoom-in').addEventListener('click', () => zoomButton(1.35));
+/* ZOOM BUTTONS */
+document.getElementById('btn-zoom-in').addEventListener('click',  () => zoomButton(1.35));
 document.getElementById('btn-zoom-out').addEventListener('click', () => zoomButton(1/1.35));
 function zoomButton(factor) {
   const wW = mapWrapper.clientWidth, wH = mapWrapper.clientHeight;
-  const originX = wW / 2, originY = wH / 2;
-  const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale * factor));
-  tx = originX - (originX - tx) * (newScale / scale);
-  ty = originY - (originY - ty) * (newScale / scale);
-  scale = newScale;
-  clampTranslation();
-  applyTransform(true);
+  const newScale = Math.max(minScale, Math.min(MAX_SCALE, scale*factor));
+  tx = wW/2-(wW/2-tx)*(newScale/scale);
+  ty = wH/2-(wH/2-ty)*(newScale/scale);
+  scale = newScale; clampTranslation(); applyTransform(true);
 }
 
-/* ── REALTIME LISTENER ── */
+/* ── FIX 1: REALTIME LISTENER con manejo de error ── */
+// Timeout de 12s → si no llegan datos, mostrar mensaje de error con instrucciones
+const loadingTimeout = setTimeout(() => {
+  const msg = document.getElementById('loading-msg');
+  if (msg) msg.innerHTML =
+    '⚠️ Sin conexión con Firebase<br><br>' +
+    '<span style="font-size:11px;color:rgba(255,255,255,.35)">Ve a Firebase Console →<br>' +
+    'Realtime Database → Reglas<br>' +
+    'y pon ".read": true, ".write": true</span>';
+}, 12000);
+
 onValue(ref(db, 'juegos'), snapshot => {
+  clearTimeout(loadingTimeout);  // conexión OK, cancelar timeout
   document.getElementById('loading').style.display = 'none';
   currentStates = snapshot.val() || {};
   STATIONS.forEach(s => renderPin(s.id));
-  //renderScoreboard();
+}, error => {
+  // Error de permisos → mostrar instrucciones
+  clearTimeout(loadingTimeout);
+  const msg = document.getElementById('loading-msg');
+  if (msg) msg.innerHTML =
+    '🔒 Acceso denegado por Firebase<br><br>' +
+    '<span style="font-size:11px;color:rgba(255,255,255,.35)">Ve a Firebase Console →<br>' +
+    'Realtime Database → Reglas<br>' +
+    'y pon ".read": true, ".write": true</span>';
 });
 
 /* ── RENDER PIN ── */
@@ -465,176 +414,99 @@ function renderPin(id) {
   const pin = document.getElementById('pin-' + id);
   const pt  = document.getElementById('pt-' + id);
   const hd  = document.getElementById('hd-' + id);
-
   pin.className = 'pin ' + (d.status || 'disponible');
-
   if (d.currentTeam) {
     const t = TEAMS.find(t => t.id === d.currentTeam);
-    if (t) {
-      pt.style.cssText = `display:block;background:${hex(t.color,.25)};color:${t.color};border:0.5px solid ${hex(t.color,.5)}`;
-      pt.textContent   = t.name;
-    }
-  } else {
-    pt.style.display = 'none';
-  }
-
+    if (t) { pt.style.cssText = `display:block;background:${hex(t.color,.25)};color:${t.color};border:0.5px solid ${hex(t.color,.5)}`; pt.textContent = t.name; }
+  } else { pt.style.display = 'none'; }
   const history = d.history || [];
-  hd.innerHTML  = history.map(tid => {
-    const t = TEAMS.find(t => t.id === tid);
-    return t ? `<span class="hdot" style="background:${t.color}" title="${t.name}"></span>` : '';
-  }).join('');
+  hd.innerHTML = history.map(tid => { const t = TEAMS.find(t => t.id===tid); return t?`<span class="hdot" style="background:${t.color}" title="${t.name}"></span>`:''; }).join('');
 }
-
-/* ── SCOREBOARD ── 
-function renderScoreboard() {
-  const counts = {}; TEAMS.forEach(t => counts[t.id] = 0);
-  STATIONS.forEach(s => {
-    (currentStates[s.id]?.history || []).forEach(tid => { if (counts[tid] !== undefined) counts[tid]++; });
-  });
-  const max = Math.max(...Object.values(counts), 1);
-  document.getElementById('score-grid').innerHTML = TEAMS.map(t => `
-    <div class="score-card">
-      <span class="sc-dot" style="background:${t.color}"></span>
-      <div class="sc-info">
-        <div class="sc-name">${t.name}</div>
-        <div class="sc-count">${counts[t.id]} juego${counts[t.id] !== 1 ? 's' : ''}</div>
-        <div class="sc-bar-wrap"><div class="sc-bar" style="width:${Math.round(counts[t.id]/max*100)}%;background:${t.color}"></div></div>
-      </div>
-    </div>`).join('');
-}
-*/
 
 /* ── OPEN SHEET ── */
 window.openSheet = function(stationId) {
   activeStation = stationId;
   const station = STATIONS.find(s => s.id === stationId);
   const d       = currentStates[stationId] || { status:'disponible', currentTeam:'', history:[] };
-
   document.getElementById('sheet-title').textContent = station.label;
   document.getElementById('sheet-sub').textContent   = 'Gestiona el estado y los grupos';
-
-  // Highlight current status buttons
-  document.getElementById('btn-disponible').className =
-    'status-btn' + (d.status === 'disponible' ? ' active-green' : '');
-  document.getElementById('btn-ocupado').className =
-    'status-btn' + (d.status === 'ocupado' ? ' active-red' : '');
-
+  document.getElementById('btn-disponible').className = 'status-btn' + (d.status==='disponible'?' active-green':'');
+  document.getElementById('btn-ocupado').className    = 'status-btn' + (d.status==='ocupado'?' active-red':'');
+  // Scroll al inicio del sheet-body cada vez que se abre
+  document.getElementById('sheet-body').scrollTop = 0;
   renderTeamsGrid(d);
-  document.getElementById('sheet-bg').classList.add('open');
+  sheetBg.classList.add('open');
 };
 
-/* ── RENDER TEAMS GRID (inside sheet) ── */
+/* ── RENDER TEAMS GRID ── */
 function renderTeamsGrid(d) {
-  const history     = d.history || [];
-  const currentTeam = d.currentTeam;
-
+  const history = d.history || [], currentTeam = d.currentTeam;
   document.getElementById('teams-grid').innerHTML = TEAMS.map(t => {
-    const isSelected = currentTeam === t.id;           // currently playing
-    const isVisited  = !isSelected && history.includes(t.id); // was here, now done
-
-    let cls = 'team-btn';
-    let extraStyle = '';
-    let label = t.name;
-
-    if (isSelected) {
-      cls += ' selected';
-      extraStyle = `background:${hex(t.color,.15)};border-color:${hex(t.color,.7)};color:${t.color}`;
-      label += ' ▶';
-    } else if (isVisited) {
-      cls += ' visited';
-    }
-
+    const isSelected = currentTeam === t.id;
+    const isVisited  = !isSelected && history.includes(t.id);
+    let cls = 'team-btn', extraStyle = '', label = t.name;
+    if (isSelected) { cls += ' selected'; extraStyle = `background:${hex(t.color,.15)};border-color:${hex(t.color,.7)};color:${t.color}`; label += ' ▶'; }
+    else if (isVisited) { cls += ' visited'; }
     return `<button class="${cls}" style="${extraStyle}" onclick="toggleTeam('${t.id}')">
-      <span class="team-dot" style="background:${t.color}"></span>
-      ${label}
+      <span class="team-dot" style="background:${t.color}"></span>${label}
       <span class="cancel-x">✕</span>
     </button>`;
   }).join('');
 }
 
-/* ── TOGGLE TEAM ──
-   Rules:
-   - If team is in history → REMOVE from history (and clear currentTeam if it was them)
-   - If team is NOT in history → ADD to history AND set as currentTeam, status → ocupado
-*/
+/* ── TOGGLE TEAM ── */
 window.toggleTeam = async function(teamId) {
   const stationRef = ref(db, 'juegos/' + activeStation);
   const snap    = await get(stationRef);
   const current = snap.val() || { status:'disponible', currentTeam:'', history:[] };
   let   history = current.history ? [...current.history] : [];
   let   { status, currentTeam } = current;
-
   const t = TEAMS.find(t => t.id === teamId);
   const s = STATIONS.find(s => s.id === activeStation);
-
   if (history.includes(teamId)) {
-    // ── CANCEL: remove from history ──
-    history     = history.filter(id => id !== teamId);
-    if (currentTeam === teamId) {
-      currentTeam = '';   // Firebase no acepta null → usar string vacío
-      status = 'disponible';
-    }
+    history = history.filter(id => id !== teamId);
+    if (currentTeam === teamId) { currentTeam = ''; status = 'disponible'; }
     showToast(`↩ ${t.name} eliminado de ${s.label}`);
   } else {
-    // ── ADD: mark as playing ──
-    history.push(teamId);
-    currentTeam = teamId;
-    status      = 'ocupado';
+    history.push(teamId); currentTeam = teamId; status = 'ocupado';
     showToast(`🔴 ${s.label} → ${t.name} jugando`);
   }
-
   await set(stationRef, { status, currentTeam, history });
-
-  // Re-render the sheet grid with updated data
   renderTeamsGrid({ status, currentTeam, history });
-
-  // Update status buttons
-  document.getElementById('btn-disponible').className =
-    'status-btn' + (status === 'disponible' ? ' active-green' : '');
-  document.getElementById('btn-ocupado').className =
-    'status-btn' + (status === 'ocupado' ? ' active-red' : '');
+  document.getElementById('btn-disponible').className = 'status-btn' + (status==='disponible'?' active-green':'');
+  document.getElementById('btn-ocupado').className    = 'status-btn' + (status==='ocupado'?' active-red':'');
 };
 
-/* ── SET STATUS (disponible / ocupado buttons) ── */
+/* ── SET STATUS ── */
 window.setStatus = async function(newStatus) {
   const stationRef = ref(db, 'juegos/' + activeStation);
   const snap    = await get(stationRef);
   const current = snap.val() || { status:'disponible', currentTeam:'', history:[] };
-
-  // If setting disponible, clear currentTeam
   const currentTeam = newStatus === 'disponible' ? '' : (current.currentTeam || '');
-
   await set(stationRef, { ...current, status: newStatus, currentTeam });
-
-  document.getElementById('btn-disponible').className =
-    'status-btn' + (newStatus === 'disponible' ? ' active-green' : '');
-  document.getElementById('btn-ocupado').className =
-    'status-btn' + (newStatus === 'ocupado' ? ' active-red' : '');
-
+  document.getElementById('btn-disponible').className = 'status-btn' + (newStatus==='disponible'?' active-green':'');
+  document.getElementById('btn-ocupado').className    = 'status-btn' + (newStatus==='ocupado'?' active-red':'');
   const s = STATIONS.find(s => s.id === activeStation);
-  showToast(newStatus === 'disponible' ? `🟢 ${s.label} → Disponible` : `🔴 ${s.label} → Ocupado`);
+  showToast(newStatus==='disponible' ? `🟢 ${s.label} → Disponible` : `🔴 ${s.label} → Ocupado`);
 };
 
 /* ── CLOSE SHEET ── */
 window.closeSheet = function() {
-  document.getElementById('sheet-bg').classList.remove('open');
+  sheetBg.classList.remove('open');
   activeStation = null;
 };
 
 /* ── HELPERS ── */
 function showToast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
 }
-
 function hex(h, a) {
-  const r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
+  const r=parseInt(h.slice(1,3),16), g=parseInt(h.slice(3,5),16), b=parseInt(h.slice(5,7),16);
   return `rgba(${r},${g},${b},${a})`;
 }
-
 </script>
 </body>
 </html>
