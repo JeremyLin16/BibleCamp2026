@@ -45,23 +45,20 @@
   body.is-admin .pin { cursor:pointer; }
   body.is-admin .pin:active .pin-circle { transform:scale(.88); }
 
-  /* Sheet ── FIX 2: max-height + scroll para que quepa todo con 14 grupos */
+  /* Sheet */
   #sheet-bg { position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:30;display:none;align-items:flex-end; }
   #sheet-bg.open { display:flex; }
   #sheet {
     background:#161b27;border-radius:18px 18px 0 0;border:.5px solid var(--border);
     width:100%;
-    /* FIX 2: limitar altura y permitir scroll interno */
     max-height: 82dvh;
     display: flex;
     flex-direction: column;
   }
-  /* Cabecera fija del sheet (handle + título + botones estado) */
   #sheet-header {
     padding: 18px 16px 0;
     flex-shrink: 0;
   }
-  /* Cuerpo scrollable (grupos + cerrar) */
   #sheet-body {
     overflow-y: auto;
     padding: 0 16px 32px;
@@ -77,7 +74,6 @@
   .status-btn.active-green { background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.5);color:#86efac; }
   .status-btn.active-red   { background:rgba(239,68,68,.15); border-color:rgba(239,68,68,.5); color:#fca5a5; }
 
-  /* Section label */
   .section-label { font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px; }
 
   /* Teams grid */
@@ -92,6 +88,95 @@
 
   #cancel-btn { width:100%;padding:8px;border-radius:10px;border:none;background:transparent;color:rgba(255,255,255,.3);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer; }
 
+  /* ── SCOREBOARD BAR (solo en modo guía) ── */
+  #scoreboard-bar {
+    display: none;
+    flex-shrink: 0;
+    background: rgba(10,13,20,.96);
+    border-top: 1px solid var(--border);
+    padding: 7px 10px 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    z-index: 20;
+  }
+  #scoreboard-bar::-webkit-scrollbar { display: none; }
+
+  body.is-admin #scoreboard-bar { display: flex; align-items: center; gap: 8px; }
+
+  #sb-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-right: 4px;
+  }
+
+  .sb-station {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface);
+    border: .5px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 8px;
+    flex-shrink: 0;
+    min-width: 0;
+    cursor: default;
+    transition: border-color .15s;
+  }
+  .sb-station:hover { border-color: rgba(255,255,255,.22); }
+
+  .sb-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 12px;
+    text-align: center;
+  }
+
+  .sb-divider {
+    width: 1px;
+    height: 12px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .sb-dots {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  /* NUEVO ESTILO DE LOS PUNTOS CON NÚMERO */
+  .sb-dot {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0px 1px 2px rgba(0,0,0,0.6); 
+    flex-shrink: 0;
+  }
+
+  .sb-empty {
+    font-size: 10px;
+    color: rgba(255,255,255,.2);
+    letter-spacing: .02em;
+  }
+
+  /* Admin bar */
   #admin-bar { display:none;padding:8px 16px;background:rgba(239,68,68,.08);border-top:1px solid rgba(239,68,68,.18);font-size:11px;color:#fca5a5;text-align:center;flex-shrink:0; }
   body.is-admin #admin-bar { display:block; }
 
@@ -130,7 +215,6 @@
 
   <div id="sheet-bg">
     <div id="sheet">
-      <!-- FIX 2: cabecera fija siempre visible -->
       <div id="sheet-header">
         <div id="sheet-handle"></div>
         <div id="sheet-title">Estación</div>
@@ -140,7 +224,6 @@
           <button class="status-btn" id="btn-ocupado"    onclick="setStatus('ocupado')">🔴 Ocupado</button>
         </div>
       </div>
-      <!-- FIX 2: grupos en zona scrollable -->
       <div id="sheet-body">
         <div class="section-label">Grupos — toca para añadir o cancelar</div>
         <div id="teams-grid"></div>
@@ -150,13 +233,15 @@
   </div>
 </div>
 
-<!-- FIX extra: scoreboard eliminado correctamente (estaba con /* */ que NO es HTML válido) -->
+<div id="scoreboard-bar">
+  <span id="sb-label">Grupos por estación</span>
+  </div>
 
 <div id="admin-bar">✏️ Toca un pin para gestionar el estado</div>
 <div id="toast"></div>
 
 <script type="module">
-import { initializeApp }                       from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -166,8 +251,7 @@ const firebaseConfig = {
   projectId: "mapajuegos",
   storageBucket: "mapajuegos.firebasestorage.app",
   messagingSenderId: "998173054463",
-  appId: "1:998173054463:web:a3c6b1795af7628f6303ca",
-  measurementId: "G-T903CERQZ3"
+  appId: "1:998173054463:web:a3c6b1795af7628f6303ca"
 };
 
 const TEAMS = [
@@ -188,14 +272,25 @@ const TEAMS = [
 ];
 
 const STATIONS = [
-  { id:"atletismo", label:"ATLETISMO",               num:"1", left:"3.7%",  top:"50.6%" },
-  { id:"pichi",     label:"FÚTBOL AMERICANO (PICHI)",num:"2", left:"21.2%", top:"77.8%" },
-  { id:"basket",    label:"BASKET (CAO)",            num:"3", left:"20.7%", top:"5.6%"  },
-  { id:"silencio",  label:"SILENCIO",                num:"4", left:"34.7%", top:"24.8%" },
-  { id:"fuerza",    label:"FUERZA BRUTA",            num:"5", left:"47.2%", top:"54%"   },
-  { id:"s_juan",    label:"S. JUAN",                 num:"6", left:"47.2%", top:"63.7%" },
-  { id:"bandera",   label:"ATRAPA LA BANDERA",       num:"7", left:"72.3%", top:"17.7%" },
-  { id:"bolos",     label:"BOLOS HUMANOS",           num:"8", left:"32.4%", top:"84.9%" }
+  // 🟢 绿色站点
+  { id:"s1",  num:"1",  label:"Estación 1",  left:"52.5%", top:"51.0%" },
+  { id:"s2",  num:"2",  label:"Estación 2",  left:"76.5%", top:"45.5%" },
+  { id:"s3",  num:"3",  label:"Estación 3",  left:"64.5%", top:"40.5%" },
+  { id:"s4",  num:"4",  label:"Estación 4",  left:"55.5%", top:"22.5%" },
+  { id:"s5",  num:"5",  label:"Estación 5",  left:"15.0%", top:"8.5%"  },
+  
+  // 🔵 蓝色站点
+  { id:"s6",  num:"6",  label:"Estación 6",  left:"35.0%", top:"59.5%" },
+  { id:"s7",  num:"7",  label:"Estación 7",  left:"21.8%", top:"42.5%" },
+  { id:"s8",  num:"8",  label:"Estación 8",  left:"58.0%", top:"63.5%" },
+  { id:"s9",  num:"9",  label:"Estación 9",  left:"47.3%", top:"43.5%" },
+  { id:"s10", num:"10", label:"Estación 10", left:"26.5%", top:"9.0%"  },
+  
+  // 🔴 红色站点
+  { id:"s11", num:"11", label:"Estación 11", left:"37.5%", top:"14.5%" },
+  { id:"s12", num:"12", label:"Estación 12", left:"81.0%", top:"23.5%" },
+  { id:"s13", num:"13", label:"Estación 13", left:"44.5%", top:"54.0%" },
+  { id:"s14", num:"14", label:"Estación 14", left:"30.5%", top:"31.0%" } 
 ];
 
 /* ── INIT ── */
@@ -249,6 +344,45 @@ STATIONS.forEach(s => {
   }
   mapCanvas.appendChild(p);
 });
+
+/* ── BUILD SCOREBOARD CARDS ── */
+function buildScoreboardCards() {
+  const bar = document.getElementById('scoreboard-bar');
+  // Remove any existing cards (not the label)
+  bar.querySelectorAll('.sb-station').forEach(el => el.remove());
+  STATIONS.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'sb-station';
+    card.id = 'sb-' + s.id;
+    card.title = s.label;
+    card.innerHTML = `
+      <span class="sb-num">${s.num}</span>
+      <span class="sb-divider"></span>
+      <span class="sb-dots" id="sbd-${s.id}"><span class="sb-empty">—</span></span>`;
+    bar.appendChild(card);
+  });
+}
+buildScoreboardCards();
+
+/* ── UPDATE SCOREBOARD CON NÚMEROS ── */
+function updateScoreboard() {
+  STATIONS.forEach(s => {
+    const dotsEl = document.getElementById('sbd-' + s.id);
+    if (!dotsEl) return;
+    const d = currentStates[s.id] || {};
+    const history = d.history || [];
+    if (history.length === 0) {
+      dotsEl.innerHTML = '<span class="sb-empty">—</span>';
+    } else {
+      dotsEl.innerHTML = history.map(tid => {
+        const t = TEAMS.find(t => t.id === tid);
+        // Extraemos el número del id (ej. 'g12' -> '12')
+        const groupNum = tid.replace('g', '');
+        return t ? `<span class="sb-dot" style="background:${t.color}" title="${t.name}">${groupNum}</span>` : '';
+      }).join('');
+    }
+  });
+}
 
 /* ── FIX 3: bloquear que los eventos touch del sheet lleguen al mapa ── */
 const sheetBg = document.getElementById('sheet-bg');
@@ -342,7 +476,7 @@ mapWrapper.addEventListener('touchmove', e => {
 }, { passive: false });
 
 mapWrapper.addEventListener('touchend', e => {
-  if (sheetBg.classList.contains('open')) return;  // FIX 3: también aquí
+  if (sheetBg.classList.contains('open')) return;
   if (e.touches.length < 2) touch2 = null;
   if (e.touches.length === 0) touch1 = null;
   setTimeout(() => { wasPanning = false; }, 50);
@@ -382,8 +516,7 @@ function zoomButton(factor) {
   scale = newScale; clampTranslation(); applyTransform(true);
 }
 
-/* ── FIX 1: REALTIME LISTENER con manejo de error ── */
-// Timeout de 12s → si no llegan datos, mostrar mensaje de error con instrucciones
+/* ── REALTIME LISTENER ── */
 const loadingTimeout = setTimeout(() => {
   const msg = document.getElementById('loading-msg');
   if (msg) msg.innerHTML =
@@ -394,12 +527,12 @@ const loadingTimeout = setTimeout(() => {
 }, 12000);
 
 onValue(ref(db, 'juegos'), snapshot => {
-  clearTimeout(loadingTimeout);  // conexión OK, cancelar timeout
+  clearTimeout(loadingTimeout);
   document.getElementById('loading').style.display = 'none';
   currentStates = snapshot.val() || {};
   STATIONS.forEach(s => renderPin(s.id));
+  if (isAdmin) updateScoreboard();
 }, error => {
-  // Error de permisos → mostrar instrucciones
   clearTimeout(loadingTimeout);
   const msg = document.getElementById('loading-msg');
   if (msg) msg.innerHTML =
@@ -433,7 +566,6 @@ window.openSheet = function(stationId) {
   document.getElementById('sheet-sub').textContent   = 'Gestiona el estado y los grupos';
   document.getElementById('btn-disponible').className = 'status-btn' + (d.status==='disponible'?' active-green':'');
   document.getElementById('btn-ocupado').className    = 'status-btn' + (d.status==='ocupado'?' active-red':'');
-  // Scroll al inicio del sheet-body cada vez que se abre
   document.getElementById('sheet-body').scrollTop = 0;
   renderTeamsGrid(d);
   sheetBg.classList.add('open');
